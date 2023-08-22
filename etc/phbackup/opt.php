@@ -1,7 +1,7 @@
 <?php
 
 // Script version
-$script_ver = "0.9.0";
+$script_ver="1.0.0";
 
 // Database host / default: localhost
 $db_host = 'localhost';
@@ -26,8 +26,7 @@ $default_include_paths="/etc
 /var/db-backup";
 
 // Paths to exclude by default
-$default_exclude_paths="/tmp/mc*
-/var/log
+$default_exclude_paths="/var/log
 /var/www/logs";
 
 

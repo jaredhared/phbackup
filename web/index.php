@@ -134,13 +134,13 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
                 break;
 
         case "unlock":
-		$sql="UPDATE hosts SET worker=0, status=0, assigned_worker=0 WHERE id=".$_POST['id'];
+		$sql="UPDATE hosts SET worker=-1, status=0 WHERE id=".$_POST['id'];
 		$res=$db->query($sql);
                 echo "<center><h3>Host <span>".$_POST['id']."</span> was successfully unlocked";
                 break;
 
         case "backup":
-		$sql="UPDATE hosts SET worker=0, status=0, assigned_worker=0, last_backup='0000-00-00 00:00:00', next_try='0000-00-00 00:00:00' WHERE id=".$_POST['id'];
+		$sql="UPDATE hosts SET worker=-1, status=0, last_backup='0000-00-00 00:00:00', next_try='0000-00-00 00:00:00' WHERE id=".$_POST['id'];
 		$res=$db->query($sql);
                 echo "<center><h3>Host <span>".$_POST['id']."</span> was successfully unlocked, backup will start soon";
                 break;
