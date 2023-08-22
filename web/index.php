@@ -2,8 +2,6 @@
 
 // PHBackup backup system
 // Copyright (c) 2023, Host4Biz
-// Version 0.1.0
-
 
 // Settings
 include("/etc/phbackup/opt.php");
@@ -52,12 +50,12 @@ function DrawHost($host_data, $host_vars) {
 
 <html>
 <head>
-<title>PHBack backup system</title>
+<title>PHBackup <?php echo $script_ver; ?></title>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<h1>PHBack backup system</h1>
+<h1>PHBackup <?php echo $script_ver; ?></h1>
 <a href = "index.php" class="no-underline">🏠 Home page</a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href = "index.php?action=add" class="no-underline">➕ Add host</a>

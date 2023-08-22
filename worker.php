@@ -3,7 +3,6 @@
 
 // PHBackup backup system
 // Copyright (c) 2023, Host4Biz
-// Version 0.1.0
 
 
 // Checking if we are in CLI
