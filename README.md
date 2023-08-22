@@ -28,7 +28,7 @@ It runs at a backup server and allows you to configure and manage backups of you
 3. Copy files from web folder into root of your web directory
 4. Set up HTTP authorization for web part
 5. Copy folder phbackup from etc folder into /etc
-6. Copy phbackup.service and phbackup@.service files into /etc/systemd/system
+6. Copy phbackup.service and phbackup@.service files from systemd folder into /etc/systemd/system
 7. Reload Systemd: `systemctl daemon-reload`
 8. Adjust needed number of workers in /root/scripts/start.sh
 9. Create database, user and password in MySQL
