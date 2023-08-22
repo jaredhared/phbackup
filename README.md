@@ -5,7 +5,7 @@ It runs at a backup server and allows you to configure and manage backups of you
 
 ## Screenshots
 
-![Main interface window](screens/add.png?raw=true "Main window")
+![Main interface window](screens/main.png?raw=true "Main window")
 ![Add host window](screens/add.png?raw=true "Add host window")
 
 ## Features
