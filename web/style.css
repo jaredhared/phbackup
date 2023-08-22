@@ -1,0 +1,18 @@
+body { font-family: Ubuntu,Verdana; font-size:11pt; }
+td { font-family: Ubuntu,Verdana; font-size:11pt; }
+th { font-family: Ubuntu,Verdana; font-size:10pt; }
+input,textarea { font-family: Ubuntu,Verdana; font-size:10pt; }
+a, a:visited {text-decoration: none; color:#00f; }
+.ip1 { background-color: #f5f5f5; font-family: Ubuntu,Verdana; font-size:11pt; }
+.ip0 { background-color: #e5e5e5; font-family: Ubuntu,Verdana; font-size:11pt; }
+.ip2 { background-color: #e5e5ff; font-family: Ubuntu,Verdana; font-size:11pt; }
+.align-right {text-align:right;}
+.align-left {text-align:left;}
+.align-center {text-align:center;}
+.no-underline {text-decoration: none;}
+.status-1 {color: #888;}
+.status0 {color: #0c0;}
+.status1 {color: #00c;}
+.status2 {color: #c00;}
+.hint { font-family: Ubuntu,Verdana; font-size:10pt; color: #888; }
+.red {color: #f00;}
