@@ -21,6 +21,9 @@ preg_match('/phb-worker-(\d+)/', getenv('SUPERVISOR_PROCESS_NAME'), $matches);
 $worker_id = $matches[1];
 cli_set_process_title("phbackup-$worker_id [idle]");
 
+$datestamp = date("Y-m-d_H:i:s");
+echo "$datestamp - [$worker_id] Started worker #$worker_id\n"; 
+
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
