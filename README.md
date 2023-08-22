@@ -45,6 +45,7 @@ It runs at a backup server and allows you to configure and manage backups of you
 ## FAQ
 
 > Why PHP?
+
 I just know it better, it was the best way to write this in just one day. Also, it is handy when it comes to write web interfaces
 
 > Why there is no authorization?
