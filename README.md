@@ -48,9 +48,13 @@ It runs at a backup server and allows you to configure and manage backups of you
 
 I just know it better, it was the best way to write this in just one day. Also, it is handy when it comes to write web interfaces
 
+
 > Why there is no authorization?
+
 Since backups are **very important** part of the infrastructure, you should place them on secured subdomain and restrict access by HTTP auth/firewall/etc.
 
+
 > How to backup MySQL/Redis/Mongo/other things?
+
 PHBackup just copies files, so you should prepare your data before it will be copied. For example, you can dump your database into some dir and add this dir into include paths in host configuration.
 
