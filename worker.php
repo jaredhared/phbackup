@@ -57,7 +57,7 @@ while(true)
         if( mysqli_num_rows($res)>0 && !$db->error ){
             $sql="UPDATE hosts set worker=$worker_id, backup_started=NOW(), status=1 where id=".$row['id']." AND worker=-1;";
 	    $db->query($sql);
-            echo "$datestart - [$worker_id] Preparing to backup host #".$row['id']."\n"; 
+            echo "$datestart - [$worker_id] Host ".$row['name']." - preparing to backup\n"; 
             $host_id = $row['id'];
 	    $busy=1;
 	    $db->commit();
@@ -83,7 +83,7 @@ while(true)
             }
 
             // Setting process title
-    	    cli_set_process_title("phbackup-$worker_id [processing ".$host_data['id']."]");
+    	    cli_set_process_title("phbackup-$worker_id [backing ".$host_data['name']."]");
 
             // Check if directory exists
             if (!is_dir("$backup_path/".$host_data['name'])) system ("mkdir -p $backup_path/".$host_data['name']);
