@@ -41,7 +41,7 @@ while(true)
         $host_id=0;
         $db->begin_transaction();
 
-        $sql="SELECT hosts.id, hosts.enabled, hosts.worker, hosts.last_backup, host_vars.value, assigned_worker 
+        $sql="SELECT hosts.id, hosts.name, hosts.enabled, hosts.worker, hosts.last_backup, host_vars.value, assigned_worker 
     	    FROM `hosts` left JOIN host_vars on hosts.id=host_vars.host 
     	    WHERE host_vars.var='backup_period' 
     	    AND hosts.enabled=1 
