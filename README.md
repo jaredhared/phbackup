@@ -62,3 +62,8 @@ Since backups are **very important** part of the infrastructure, you should plac
 
 PHBackup just copies files, so you should prepare your data before it will be copied. For example, you can dump your database into some dir and add this dir into include paths in host configuration.
 
+## Todo
+1. Stats section in web
+2. Monitoring stats for Zabbix
+3. Usage of preconfigured SSH keys instead of backup server one
+
