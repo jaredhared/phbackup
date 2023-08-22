@@ -3,6 +3,10 @@
 PHBackup is a simple and fast backup solution to make backups of Linux/Unix hosts. 
 It runs at a backup server and allows you to configure and manage backups of your machines.
 
+## Screenshots
+
+![Main interface window](/screenshots/main.png?raw=true "Main window")
+![Add host window](/screenshots/add.png?raw=true "Add host window")
 
 ## Features
 
