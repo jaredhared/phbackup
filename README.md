@@ -28,7 +28,7 @@ It runs at a backup server and allows you to configure and manage backups of you
 ## Installation
 
 1. Make a **/root/scripts** folder
-2. Clone this repository into /root/scripts
+2. Clone this repository into /root/scripts: `cd /root/scripts && git clone https://github.com/jaredhared/phbackup.git`
 3. Copy files from web folder into root of your web directory
 4. Set up HTTP authorization for web part
 5. Copy folder phbackup from etc folder into /etc
