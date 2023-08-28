@@ -29,6 +29,16 @@ $default_include_paths="/etc
 $default_exclude_paths="/var/log
 /var/www/logs";
 
+// Default pre-backup schedule
+$default_pre_schedule="15 0 * * * root /opt/phbackup.sh > /var/log/phbackup_pre.log 2>&1";
+
+// Default pre-backup script
+$default_pre_script="#!/bin/sh
+
+# This is a phbackup pre-backup script
+
+";
+
 
 
 ?>
