@@ -47,9 +47,9 @@ It runs at a backup server and allows you to configure and manage backups of you
 3. If it is enabled, backups will run automatically
 
 ## Pre-backup scripts
-PHbackup supports so-called pre-backup scripts, which allows to prepare data on the target host for backup: dump databases etc.
-Pre-backup scripts is a regular shell script, which will be run as scheduled by Cron daemon.
-You can customize both pre-backup script and cron line which will run it. If you will check "Install pre-backup script" checkbox, script will be deployed to the /opt/ directory on target host, and cron file will be placed in /etc/cron.d/.
+* PHbackup supports so-called pre-backup scripts, which allows to prepare data on the target host for backup: dump databases etc.
+* Pre-backup script is a regular shell script, which will be run as scheduled by Cron daemon.
+* You can customize both pre-backup script and cron line which will run it. If you will check "Install pre-backup script" checkbox, script will be deployed to the /opt/ directory on target host, and cron file will be placed in /etc/cron.d/.
 
 ## FAQ
 
