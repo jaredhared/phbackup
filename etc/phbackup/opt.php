@@ -1,7 +1,7 @@
 <?php
 
 // Script version
-$script_ver="1.1.0";
+$script_ver="1.2.0";
 
 // Database host / default: localhost
 $db_host = 'localhost';
@@ -33,11 +33,35 @@ $default_exclude_paths="/var/log
 $default_pre_schedule="15 0 * * * root /opt/phbackup.sh > /var/log/phbackup_pre.log 2>&1";
 
 // Default pre-backup script
-$default_pre_script="#!/bin/sh
+$default_pre_script = '
+#!/bin/bash
 
-# This is a phbackup pre-backup script
+MARIABACKUP=1
+MYSQLDUMP=0
+BACKUPPATH="/var/db-backup"
 
-";
+rm -rf $BACKUPPATH
+mkdir $BACKUPPATH
+
+if [ $MARIABACKUP -eq 1 ]; then
+    echo -n "mariabackup starting..."
+    /usr/bin/mariabackup --backup --target-dir=$BACKUPPATH/mariabackup --user=root
+    echo -n "mariabackup prepare starting..."
+    /usr/bin/mariabackup --prepare --target-dir=$BACKUPPATH/mariabackup
+    echo "mariabackup Done!"
+fi
+
+if [ $MYSQLDUMP -eq 1 ]; then
+    while read db
+    do
+	echo -n "Dumping $db..."
+	mysqldump --triggers --routines --events $db | gzip > $BACKUPPATH/mysqldump/$db.sql.gz
+	echo "Done!"
+    done < <(mysql -e "SHOW DATABASES;" | sed "1d" | grep -v "information_schema\|performance_schema\|mysql")
+fi
+
+exit 0
+'
 
 
 

@@ -21,7 +21,7 @@ function DrawHost($host_data, $host_vars) {
     if (isset($host_data['user'])) $user=$host_data['user']; else $user="root";
     if (isset($host_data['ssh_key'])) $ssh_key=$host_data['ssh_key'];
     if (isset($host_data['time_slots'])) $time_slots=$host_data['time_slots']; else $time_slots="2-6";
-    if ($host_data['enabled']==1) $enabled="checked";
+    if (isset($host_data['enabled']) && $host_data['enabled']==1) $enabled="checked"; else $enabled="";
     if (isset($host_vars['backup_period'])) $bperiod=$host_vars['backup_period']; else $bperiod=24;
     if (isset($host_vars['backup_keep_period'])) $backup_keep_period=$host_vars['backup_keep_period']; else $backup_keep_period=30;
     if (isset($host_vars['rsync_options'])) $rsync_options=$host_vars['rsync_options']; else $rsync_options="-vbrltz";
@@ -88,7 +88,8 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 		$updated_times="";
 		foreach ($times as $time) {
 		    if($hours=explode("-",$time)) {
-			if(empty($hours[1])) $hours[1]=$hours[0]+1;
+			if(empty($hours[1]) && !empty($hours[0])) $hours[1]=$hours[0]+1;
+			if(empty($hours[0]) && !empty($hours[1])) $hours[0]=$hours[1]-1;
 			if ( $hours[1]>$hours[0] ) {
 		    	    if($updated_times=="") $updated_times=$hours[0]."-".$hours[1]; 
 		    	    else $updated_times.=",".$hours[0]."-".$hours[1];
@@ -96,14 +97,15 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 		    }
 		}
 
+		$_POST['pre_install']=="on" ? $pre_install="1" : $pre_install="0";
 
-		$sql="insert into hosts (name, description, ip, port, user, ssh_key, enabled, time_slots) values (
+		$sql="insert into hosts (name, description, ip, port, user, ssh_key, enabled, time_slots, pre_checksum) values (
 		'".$_POST['name']."',
 		'".$_POST['description']."',
 		'".$_POST['ip']."',
 		".$_POST['port'].",
 		'".$_POST['user']."',
-		'".$_POST['ssh_key']."',".$enabled.",".$updated_times.")";
+		'".$_POST['ssh_key']."',".$enabled.",".$updated_times.", '".$pre_install."')";
                 $res = $db->query($sql);
                 $new_host_id = $db->insert_id;
 
@@ -111,6 +113,7 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
                 $exclude_paths = base64_encode($_POST['exclude_paths']);
                 $pre_script = base64_encode($_POST['pre_script']);
                 $pre_schedule = base64_encode($_POST['pre_schedule']);
+
                 $sql = "INSERT INTO host_vars (host,var,value) VALUES
                 ($new_host_id, 'include_paths', '$include_paths'),
                 ($new_host_id, 'exclude_paths', '$exclude_paths'),
@@ -124,21 +127,30 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
                 echo "<center><h3>Host <span>".$_POST['name']." (".$_POST['ip'].", id $new_host_id)</span> was successfully added";
 		break;
 
+
+
+
+
+	// Editing host
         case "edit":
 		$enabled=0;
-		if($_POST['enabled']=="on") $enabled=1;
+		if(!empty($_POST['enabled']) && $_POST['enabled']=="on") $enabled=1;
 
 		$times=explode(",",$_POST['timestr']);
 		$updated_times="";
 		foreach ($times as $time) {
 		    if($hours=explode("-",$time)) {
-			if(empty($hours[1])) $hours[1]=$hours[0]+1;
+			if(empty($hours[1]) && !empty($hours[0])) $hours[1]=$hours[0]+1;
+			if(empty($hours[0]) && !empty($hours[1])) $hours[0]=$hours[1]-1;
 			if ( $hours[1]>$hours[0] ) {
 		    	    if($updated_times=="") $updated_times=$hours[0]."-".$hours[1]; 
 		    	    else $updated_times.=",".$hours[0]."-".$hours[1];
 			}
 		    }
 		}
+
+		// If checkbox is on, scheduling script install
+		(isset($_POST['pre_install']) && $_POST['pre_install']=="on") ? $pre_install="1" : $pre_install="0";
 
 		$sql="UPDATE hosts SET 
 		    name='".$_POST['name']."',
@@ -148,6 +160,7 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 		    user='".$_POST['user']."',
 		    ssh_key='".$_POST['ssh_key']."',
 		    time_slots='".$updated_times."',
+		    pre_install='".$pre_install."',
 		    enabled=".$enabled."
 		WHERE id=".$_POST['id'];
                 $res = $db->query($sql);
@@ -157,11 +170,23 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
                 $pre_script = base64_encode($_POST['pre_script']);
                 $pre_schedule = base64_encode($_POST['pre_schedule']);
 
-		if(!$db->query("UPDATE host_vars SET value='$pre_script' WHERE host=".$_POST['id']." AND var='pre_script'") || $db->affected_rows == 0)
-		    $db->query("INSERT INTO host_vars (host,var,value) VALUES (".$_POST['id'].", 'pre_script', '$pre_script')");
+		$sql="select id from host_vars WHERE host=".$_POST['id']." AND var='pre_script'";
+		$res = $db->query($sql);
+	        if ($res->num_rows > 0) 
+		    $db->query("UPDATE host_vars SET value='$pre_script' WHERE host=".$_POST['id']." AND var='pre_script'");
+	        else
+	    	    $db->query("INSERT INTO host_vars (host,var,value) VALUES (".$_POST['id'].", 'pre_script', '$pre_script')");
 
-		if(!$db->query("UPDATE host_vars SET value='$pre_schedule' WHERE host=".$_POST['id']." AND var='pre_schedule'") || $db->affected_rows == 0)
-		    $db->query("INSERT INTO host_vars (host,var,value) VALUES (".$_POST['id'].", 'pre_schedule', '$pre_schedule')");
+		$sql="select id from host_vars WHERE host=".$_POST['id']." AND var='pre_schedule'";
+		$res = $db->query($sql);
+	        if ($res->num_rows > 0) 
+		    $db->query("UPDATE host_vars SET value='$pre_schedule' WHERE host=".$_POST['id']." AND var='pre_schedule'");
+	        else
+	    	    $db->query("INSERT INTO host_vars (host,var,value) VALUES (".$_POST['id'].", 'pre_schedule', '$pre_schedule')");
+
+
+
+		$db->query("UPDATE host_vars SET value='$pre_schedule' WHERE host=".$_POST['id']." AND var='pre_schedule'");
 
 		$db->query("UPDATE host_vars SET value='$include_paths' WHERE host=".$_POST['id']." AND var='include_paths'");
 		$db->query("UPDATE host_vars SET value='$exclude_paths' WHERE host=".$_POST['id']." AND var='exclude_paths'");
