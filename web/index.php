@@ -48,6 +48,23 @@ function DrawHost($host_data, $host_vars) {
 }
 
 
+function normalize_time_periods($times) {
+	$updated_times="";
+	foreach ($times as $time) {
+	    if($hours=explode("-",$time)) {
+		if(empty($hours[1]) && !empty($hours[0])) $hours[1]=$hours[0]+1;
+		if(empty($hours[0]) && !empty($hours[1])) $hours[0]=$hours[1]-1;
+		if ( $hours[1]>$hours[0] ) {
+	    	    if($updated_times=="") $updated_times=$hours[0]."-".$hours[1]; 
+	    	    else $updated_times.=",".$hours[0]."-".$hours[1];
+		}
+	    }
+	}
+	return($updated_times);
+}
+
+
+
 ?>
 
 
@@ -85,17 +102,7 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 		if($_POST['enabled']=="on") $enabled=1;
 
 		$times=explode(",",$_POST['timestr']);
-		$updated_times="";
-		foreach ($times as $time) {
-		    if($hours=explode("-",$time)) {
-			if(empty($hours[1]) && !empty($hours[0])) $hours[1]=$hours[0]+1;
-			if(empty($hours[0]) && !empty($hours[1])) $hours[0]=$hours[1]-1;
-			if ( $hours[1]>$hours[0] ) {
-		    	    if($updated_times=="") $updated_times=$hours[0]."-".$hours[1]; 
-		    	    else $updated_times.=",".$hours[0]."-".$hours[1];
-			}
-		    }
-		}
+		$updated_times=normalize_time_periods($times);
 
 		$_POST['pre_install']=="on" ? $pre_install="1" : $pre_install="0";
 
@@ -137,17 +144,7 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 		if(!empty($_POST['enabled']) && $_POST['enabled']=="on") $enabled=1;
 
 		$times=explode(",",$_POST['timestr']);
-		$updated_times="";
-		foreach ($times as $time) {
-		    if($hours=explode("-",$time)) {
-			if(empty($hours[1]) && !empty($hours[0])) $hours[1]=$hours[0]+1;
-			if(empty($hours[0]) && !empty($hours[1])) $hours[0]=$hours[1]-1;
-			if ( $hours[1]>$hours[0] ) {
-		    	    if($updated_times=="") $updated_times=$hours[0]."-".$hours[1]; 
-		    	    else $updated_times.=",".$hours[0]."-".$hours[1];
-			}
-		    }
-		}
+		$updated_times=normalize_time_periods($times);
 
 		// If checkbox is on, scheduling script install
 		(isset($_POST['pre_install']) && $_POST['pre_install']=="on") ? $pre_install="1" : $pre_install="0";
@@ -170,24 +167,8 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
                 $pre_script = base64_encode($_POST['pre_script']);
                 $pre_schedule = base64_encode($_POST['pre_schedule']);
 
-		$sql="select id from host_vars WHERE host=".$_POST['id']." AND var='pre_script'";
-		$res = $db->query($sql);
-	        if ($res->num_rows > 0) 
-		    $db->query("UPDATE host_vars SET value='$pre_script' WHERE host=".$_POST['id']." AND var='pre_script'");
-	        else
-	    	    $db->query("INSERT INTO host_vars (host,var,value) VALUES (".$_POST['id'].", 'pre_script', '$pre_script')");
-
-		$sql="select id from host_vars WHERE host=".$_POST['id']." AND var='pre_schedule'";
-		$res = $db->query($sql);
-	        if ($res->num_rows > 0) 
-		    $db->query("UPDATE host_vars SET value='$pre_schedule' WHERE host=".$_POST['id']." AND var='pre_schedule'");
-	        else
-	    	    $db->query("INSERT INTO host_vars (host,var,value) VALUES (".$_POST['id'].", 'pre_schedule', '$pre_schedule')");
-
-
-
+		$db->query("UPDATE host_vars SET value='$pre_script' WHERE host=".$_POST['id']." AND var='pre_script'");
 		$db->query("UPDATE host_vars SET value='$pre_schedule' WHERE host=".$_POST['id']." AND var='pre_schedule'");
-
 		$db->query("UPDATE host_vars SET value='$include_paths' WHERE host=".$_POST['id']." AND var='include_paths'");
 		$db->query("UPDATE host_vars SET value='$exclude_paths' WHERE host=".$_POST['id']." AND var='exclude_paths'");
 		$db->query("UPDATE host_vars SET value='".$_POST['backup_period']."' WHERE host=".$_POST['id']." AND var='backup_period'");
@@ -219,6 +200,8 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 
     }
 }
+
+
 
 
 
@@ -286,8 +269,14 @@ if (empty($_GET['action'])) {
     }
 
 }
-else {
 
+
+
+
+
+
+
+else {
     // Drawing actions forms
     if (!empty($_GET['action']))
     {

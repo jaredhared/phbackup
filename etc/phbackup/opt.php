@@ -1,7 +1,7 @@
 <?php
 
 // Script version
-$script_ver="1.2.0";
+$script_ver="1.2.1";
 
 // Database host / default: localhost
 $db_host = 'localhost';
