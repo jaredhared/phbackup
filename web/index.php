@@ -240,8 +240,9 @@ if (empty($_GET['action'])) {
             echo '<td class="ip'.$color.'"><a href="index.php?action=edit&host='.$row['id'].'">'.$row['name'].'</a></td>';
 
             if ($row['enabled']==1) $enablestr="Enabled, "; else $enablestr="Disabled, ";
+            if ($row['pre_install']==1) $prestr="<br><span class='hint'>Pre-script install pending</span>"; else $prestr="";
             if ($row['worker']>=0) $workerstr=" (".$row['worker'].")"; else $workerstr="";
-            echo '<td class="ip'.$color.' status'.$row['status'].' align-center">'.$enablestr.$status[$row['status']].$workerstr.'</td>';
+            echo '<td class="ip'.$color.' status'.$row['status'].' align-center">'.$enablestr.$status[$row['status']].$workerstr.$prestr.'</td>';
 
             echo '<td class="ip'.$color.' status'.$row['status'].' align-center">'.$row['last_backup'];
             if($row['status']>1) echo '<br><span class=hint>Last try: '.$row['last_backup'].'</span>';

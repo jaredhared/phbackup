@@ -51,56 +51,60 @@ while(true)
     	    FROM `hosts` left JOIN host_vars on hosts.id=host_vars.host 
     	    WHERE ( host_vars.var='pre_script' OR host_vars.var='pre_schedule' )
     	    AND hosts.pre_install=1 
-    	    ORDER BY RAND() LIMIT 0,1 FOR UPDATE";
+    	    FOR UPDATE";
 	try {
     	    $res = $db->query($sql);
 	    if ($res === FALSE) {
     		throw new Exception($db->error);
 	    }
-    	    $row = $res->fetch_array();
     	}
     	catch(Exception $e) {
             echo "$datestart - [$worker_id] SQL error: ".$db->error."\n"; 
 	}
 
-        if( mysqli_num_rows($res)>0 && !$db->error ){
-	    $host_id=$row['id'];
+        if( mysqli_num_rows($res)>0 && !$db->error )
+        {
+            while($row = $res->fetch_array())
+            {
+    	        $host_id=$row['id'];
+		$datestart = date("Y-m-d_H:i:s");
 
-            // Getting host vars
-            $sql="select * from hosts where id=".$host_id.";";
-            $res = $db->query($sql);
-            $host_data = $res->fetch_array();
+                // Getting host vars
+                $sql="select * from hosts where id=".$host_id.";";
+                $res = $db->query($sql);
+                $host_data = $res->fetch_array();
 
-            $sql="select * from host_vars where host=".$host_id.";";
-            $res = $db->query($sql);
-            while ($row = $res->fetch_array()) {
-                $host_vars[$row['var']] = $row['value'];
-            }
+                $sql="select * from host_vars where host=".$host_id.";";
+                $res = $db->query($sql);
+                while ($row = $res->fetch_array()) {
+                    $host_vars[$row['var']] = $row['value'];
+                }
 
-            $bkpath = $backup_path."/".$host_data['name'];
-            file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
-            file_put_contents("$bkpath/phbackup.cron", base64_decode($host_vars['pre_schedule']));
-	    system("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
+                $bkpath = $backup_path."/".$host_data['name'];
+                file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
+                file_put_contents("$bkpath/phbackup.cron", base64_decode($host_vars['pre_schedule']));
+	        system("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
 
-	    $updateok=0;
-            $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
-            system($cmd, $return_code);
-            $updateok += $return_code;
-            $cmd = "scp $bkpath/phbackup.cron ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
-            system($cmd, $return_code);
-            $updateok += $return_code;
+	        $updateok=0;
+                $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
+                system($cmd, $return_code);
+                $updateok += $return_code;
+                $cmd = "scp $bkpath/phbackup.cron ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
+                system($cmd, $return_code);
+                $updateok += $return_code;
 
-	    if($updateok==0)
-	    {
-        	$sql="UPDATE hosts set pre_install=0 where id=".$host_id;
-		$db->query($sql);
-    		echo "$datestart - [$worker_id] Host ".$host_data['name']." - updated pre-backup script\n"; 
-		$db->commit();
-	    }
-	    else
-	    {
-    		echo "$datestart - [$worker_id] Host ".$host_data['name']." - failed to update pre-backup script\n"; 
-    		$db->rollback();
+	        if($updateok==0)
+	        {
+        	    $sql="UPDATE hosts set pre_install=0 where id=".$host_id;
+		    $db->query($sql);
+    		    echo "$datestart - [$worker_id] Host ".$host_data['name']." - updated pre-backup script\n"; 
+		    $db->commit();
+	        }
+	        else
+	        {
+    		    echo "$datestart - [$worker_id] Host ".$host_data['name']." - failed to update pre-backup script\n"; 
+    		    $db->rollback();
+	        }
 	    }
         }
         else 
