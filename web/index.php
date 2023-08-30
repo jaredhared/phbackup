@@ -240,7 +240,7 @@ if (empty($_GET['action'])) {
             echo '<td class="ip'.$color.'"><a href="index.php?action=edit&host='.$row['id'].'">'.$row['name'].'</a></td>';
 
             if ($row['enabled']==1) $enablestr="Enabled, "; else $enablestr="Disabled, ";
-            if ($row['worker']>0) $workerstr=" (".$row['worker'].")"; else $workerstr="";
+            if ($row['worker']>=0) $workerstr=" (".$row['worker'].")"; else $workerstr="";
             echo '<td class="ip'.$color.' status'.$row['status'].' align-center">'.$enablestr.$status[$row['status']].$workerstr.'</td>';
 
             echo '<td class="ip'.$color.' status'.$row['status'].' align-center">'.$row['last_backup'];
