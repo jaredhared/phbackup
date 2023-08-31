@@ -40,7 +40,7 @@ function DrawHost($host_data, $host_vars) {
     echo "<tr><td class='ip1'>Backup keep period<br><span class=hint>For which time to store backups, days</span></td><td class='ip1'><input type='text' size='100' name='backup_keep_period' value='$backup_keep_period'></td></tr>";
     echo "<tr><td class='ip1'>Rsync options</td><td class='ip1'><input type='text' size='100' name='rsync_options' value='$rsync_options'></td></tr>";
     echo "<tr><td class='ip1'>Pre-backup script<br><span class='hint'>A script which prepares data on the target server - dumps databases etc.</span><br><br><p style=\"color:#ff0000;\"><b>WARNING: this script will be run as root, <br>so it potentially can break your system!<br><br>Test it first and run very carefully!</b></p></td><td class='ip1'><textarea name='pre_script' cols=70 rows=10>$pre_script</textarea></td></tr>";
-    echo "<tr><td class='ip1'>Pre-backup script schedule<br><span class='hint'>Crontab entity for pre-backup script. Script name is phbackup.sh</span></td><td class='ip1'><input type='text' size='100' name='pre_schedule' value='".$pre_schedule."'></td></tr>";
+    echo "<tr><td class='ip1'>Pre-backup script schedule<br><span class='hint'>Crontab entity for pre-backup script. <br>Script name is /opt/phbackup.sh, cron file is being placed inside /etc/cron.d</span></td><td class='ip1'><input type='text' size='100' name='pre_schedule' value='".$pre_schedule."'></td></tr>";
     echo "<tr><td class='ip1'>Install pre-backup script<br><span class=hint>Install new script or update existing script and cron settings</span></td><td class='ip1'><input type='checkbox' name='pre_install' unchecked></td></tr>";
     echo "<tr><td class='ip1'>Paths to include in backup<br><span class='hint'>One path - one line</span></td><td class='ip1'><textarea name='include_paths' cols=70 rows=10>$include_paths</textarea></td></tr>";
     echo "<tr><td class='ip1'>Paths to exclude from backup<br><span class='hint'>One path - one line</span></td><td class='ip1'><textarea name='exclude_paths' cols=70 rows=10>$exclude_paths</textarea></td></tr>";
@@ -232,7 +232,7 @@ if (empty($_GET['action'])) {
     	    <th class='ip2'>Actions</th></tr>";
         $i=0;
         $color=1;
-        $status = array (-1 => "Unknown", 0 => "Ok", 1 => "Backing up", 2 => "Error");
+        $status = array (-1 => "Unknown", 0 => "Ok", 1 => "Backing up", 2 => "Error", 3 => "Backup too old");
 	$status_arr = array();
 
         while ($row = $res->fetch_array()) {

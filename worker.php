@@ -82,14 +82,21 @@ while(true)
 
                 $bkpath = $backup_path."/".$host_data['name'];
                 file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
-                file_put_contents("$bkpath/phbackup.cron", base64_decode($host_vars['pre_schedule']));
+                file_put_contents("$bkpath/tmp.cron", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n");
 	        system("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
+	        system("tr -d '\r' < $bkpath/tmp.cron > $bkpath/phbackup && rm $bkpath/tmp.cron");
 
 	        $updateok=0;
                 $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
                 system($cmd, $return_code);
                 $updateok += $return_code;
-                $cmd = "scp $bkpath/phbackup.cron ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
+                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
+                system($cmd, $return_code);
+                $updateok += $return_code;
+                $cmd = "scp $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
+                system($cmd, $return_code);
+                $updateok += $return_code;
+                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"service cron reload\"";
                 system($cmd, $return_code);
                 $updateok += $return_code;
 
