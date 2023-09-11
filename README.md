@@ -39,7 +39,8 @@ It runs at a backup server and allows you to configure and manage backups of you
 8. Import phback.sql into created database 
 9. Edit /etc/phbackup/opt.php - add proper database credentials, edit paths etc
 10. Start the daemon: `service supervisor restart`
-11.  Done!
+11. If you want Zabbix stats in file - add a line to /etc/crontab: `*/5 * * * *	root	/bin/php /path/to/your/www/zabbix.php > /tmp/phbackup.zabbix`
+12.  Done!
 
 ## Usage
 1. Add a SSH key of backup server to the target machine and allow backup server to login as root with key-based authorization

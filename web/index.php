@@ -83,7 +83,7 @@ function normalize_time_periods($times) {
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href = "index.php?action=add" class="no-underline">➕ Add host</a>
 &nbsp;&nbsp;&nbsp;&nbsp;
-<a href="index.php?action=stats" class="no-underline">&#128203; View stats</a>
+<a href="zabbix.php" class="no-underline">&#128203; Zabbix stats</a>
 
 <br><br><hr>
 
