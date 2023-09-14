@@ -39,8 +39,15 @@ It runs at a backup server and allows you to configure and manage backups of you
 8. Import phback.sql into created database 
 9. Edit /etc/phbackup/opt.php - add proper database credentials, edit paths etc
 10. Start the daemon: `service supervisor restart`
-11. If you want Zabbix stats in file - add a line to /etc/crontab: `*/5 * * * *	root	/bin/php /path/to/your/www/zabbix.php > /tmp/phbackup.zabbix`
-12.  Done!
+11.  Done!
+
+
+## Zabbix configuration
+
+1. If you need to monitor your PHBackup installation via Zabbix 6+, you will need to install `jq` tool at backup server.
+2. Also, you have to add a line to /etc/crontab: `*/5 * * * *	root	/bin/php /path/to/your/www/zabbix.php > /tmp/phbackup.zabbix`
+3. After that, copy zabbix/phbackup.conf to /etc/zabbix/zabbix_agent2.d and import template from PHBackup.yaml to your Zabbix server
+
 
 ## Usage
 1. Add a SSH key of backup server to the target machine and allow backup server to login as root with key-based authorization
@@ -74,7 +81,5 @@ At the moment no, as I said, it was written in one day, so there are no syntax c
 
 
 ## Todo
-1. Stats section in web
-2. Monitoring stats for Zabbix
-3. Usage of preconfigured SSH keys instead of backup server one
-4. Prepare script to run in a Docker container
+1. Usage of preconfigured SSH keys instead of backup server one
+2. Prepare script to run in a Docker container

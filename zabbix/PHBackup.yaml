@@ -1,0 +1,106 @@
+zabbix_export:
+  version: '6.0'
+  date: '2023-09-14T13:03:25Z'
+  groups:
+    -
+      uuid: 3500ba09d0534297840ca620c9dd46bf
+      name: Templates/Backup
+  templates:
+    -
+      uuid: 41de61947b794d518c8b79d82ef6aa03
+      template: PHBackup
+      name: PHBackup
+      groups:
+        -
+          name: Templates/Backup
+      items:
+        -
+          uuid: f472a444de8f414889a43ea268ac208b
+          name: 'PHBackup processes'
+          key: phbackup.processes
+          delay: 30m
+          history: 7d
+          trends: 30d
+          tags:
+            -
+              tag: Backup
+              value: Daemon
+          triggers:
+            -
+              uuid: 0c3843994650444b8aeae7adeba7cf40
+              expression: 'max(/PHBackup/phbackup.processes,100m)=0'
+              name: 'PHBackup is not running'
+              event_name: 'PHBackup is not running'
+              priority: HIGH
+              tags:
+                -
+                  tag: Backup
+                  value: Daemon
+      discovery_rules:
+        -
+          uuid: 091d6f7e52764382b05f6cfbbeec52bb
+          name: Hosts
+          key: phbackup.discover
+          delay: 1h
+          item_prototypes:
+            -
+              uuid: 8bfff66826dd4e8caca043efa5659d93
+              name: '{#HOST} PHBackup Age'
+              key: 'phbackup.age[{#HOST}]'
+              delay: 30m
+              history: 7d
+              trends: 30d
+              value_type: FLOAT
+              tags:
+                -
+                  tag: Backup
+                  value: '{#HOST}'
+            -
+              uuid: 4d5133c655cb4b0c9d01cdc60ce2f1e8
+              name: '{#HOST} PHBackup Period'
+              key: 'phbackup.period[{#HOST}]'
+              delay: 30m
+              history: 7d
+              trends: 30d
+              value_type: FLOAT
+              tags:
+                -
+                  tag: Backup
+                  value: '{#HOST}'
+            -
+              uuid: bf9eb82c1a214cce96911723c9284af4
+              name: '{#HOST} PHBackup Status'
+              key: 'phbackup.status[{#HOST}]'
+              delay: 30m
+              history: 7d
+              trends: 30d
+              value_type: FLOAT
+              tags:
+                -
+                  tag: Backup
+                  value: '{#HOST}'
+              trigger_prototypes:
+                -
+                  uuid: 6c23d9692bec484f82ab5c9c35632f9e
+                  expression: 'min(/PHBackup/phbackup.status[{#HOST}],100m)>1'
+                  name: '{#HOST} PHBackup error or too old'
+                  event_name: '{#HOST} PHBackup error or too old'
+                  priority: AVERAGE
+                  tags:
+                    -
+                      tag: Backup
+                      value: '{#HOST}'
+          trigger_prototypes:
+            -
+              uuid: 0eee1cc012914cff9ac2c27e437124b0
+              expression: '(last(/PHBackup/phbackup.age[{#HOST}])>last(/PHBackup/phbackup.period[{#HOST}])) and last(/PHBackup/phbackup.status[{#HOST}])<>1'
+              name: '{#HOST} PHBackup age problem'
+              event_name: '{#HOST} PHBackup age problem'
+              priority: AVERAGE
+              tags:
+                -
+                  tag: Backup
+                  value: '{#HOST}'
+      tags:
+        -
+          tag: Backup
