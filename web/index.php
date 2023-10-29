@@ -48,12 +48,19 @@ function DrawHost($host_data, $host_vars) {
 }
 
 
-function normalize_time_periods($times) {
+function normalize_time_periods($timestr) {
+	$times=explode(",",$timestr);
+//echo "timestr = '$timestr'<br>";
 	$updated_times="";
 	foreach ($times as $time) {
+//echo "time = '$time'<br>";
 	    if($hours=explode("-",$time)) {
+		if ($hours[0] > 24) $hours[0]=24;
+		if ($hours[1] > 24) $hours[1]=24;
+		if ($hours[0] < 0) $hours[0]=0;
+		if ($hours[1] < 0) $hours[1]=0;
 		if(empty($hours[1]) && !empty($hours[0])) $hours[1]=$hours[0]+1;
-		if(empty($hours[0]) && !empty($hours[1])) $hours[0]=$hours[1]-1;
+		if(empty($hours[0]) && !empty($hours[1]) && $hours[0]!=0 ) $hours[0]=$hours[1]-1;
 		if ( $hours[1]>$hours[0] ) {
 	    	    if($updated_times=="") $updated_times=$hours[0]."-".$hours[1]; 
 	    	    else $updated_times.=",".$hours[0]."-".$hours[1];
@@ -98,40 +105,43 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 {
     switch ((string)$_POST['action']) {
         case "add":
-		$enabled=0;
-		if($_POST['enabled']=="on") $enabled=1;
+		(isset($_POST['enabled']) && $_POST['enabled']=="on") ? $enabled=1 : $enabled=0;
+		( isset($_POST['pre_install']) && $_POST['pre_install']=="on" ) ? $pre_install="1" : $pre_install="0";
 
-		$times=explode(",",$_POST['timestr']);
-		$updated_times=normalize_time_periods($times);
+		$updated_times=normalize_time_periods($_POST['timestr']);
 
-		$_POST['pre_install']=="on" ? $pre_install="1" : $pre_install="0";
+		$sql="SELECT id FROM hosts WHERE name='".$_POST['name']."' and description='".$_POST['description']."' and ip='".$_POST['ip']."';";
+	        $res = $db->query($sql);
+	        if ($res->num_rows == 0) {
 
-		$sql="insert into hosts (name, description, ip, port, user, ssh_key, enabled, time_slots, pre_checksum) values (
-		'".$_POST['name']."',
-		'".$_POST['description']."',
-		'".$_POST['ip']."',
-		".$_POST['port'].",
-		'".$_POST['user']."',
-		'".$_POST['ssh_key']."',".$enabled.",".$updated_times.", '".$pre_install."')";
-                $res = $db->query($sql);
-                $new_host_id = $db->insert_id;
+			$sql="insert into hosts (name, description, ip, port, user, ssh_key, enabled, time_slots, pre_install) values (
+			'".$_POST['name']."',
+			'".$_POST['description']."',
+			'".$_POST['ip']."',
+			".$_POST['port'].",
+			'".$_POST['user']."',
+			'".$_POST['ssh_key']."',".$enabled.",'".$updated_times."', '".$pre_install."')";
+	                $res = $db->query($sql);
+	                $new_host_id = $db->insert_id;
+	
+	                $include_paths = base64_encode($_POST['include_paths']);
+	                $exclude_paths = base64_encode($_POST['exclude_paths']);
+	                $pre_script = base64_encode($_POST['pre_script']);
+	                $pre_schedule = base64_encode($_POST['pre_schedule']);
 
-                $include_paths = base64_encode($_POST['include_paths']);
-                $exclude_paths = base64_encode($_POST['exclude_paths']);
-                $pre_script = base64_encode($_POST['pre_script']);
-                $pre_schedule = base64_encode($_POST['pre_schedule']);
-
-                $sql = "INSERT INTO host_vars (host,var,value) VALUES
-                ($new_host_id, 'include_paths', '$include_paths'),
-                ($new_host_id, 'exclude_paths', '$exclude_paths'),
-                ($new_host_id, 'pre_script', '$pre_script'),
-                ($new_host_id, 'pre_schedule', '$pre_schedule'),
-                ($new_host_id, 'backup_period', ".$_POST['backup_period']."),
-                ($new_host_id, 'backup_keep_period', ".$_POST['backup_keep_period']."),
-                ($new_host_id, 'rsync_options', '".$_POST['rsync_options']."')
-                ";
-                $res = $db->query($sql);
-                echo "<center><h3>Host <span>".$_POST['name']." (".$_POST['ip'].", id $new_host_id)</span> was successfully added";
+	                $sql = "INSERT INTO host_vars (host,var,value) VALUES
+	                ($new_host_id, 'include_paths', '$include_paths'),
+	                ($new_host_id, 'exclude_paths', '$exclude_paths'),
+	                ($new_host_id, 'pre_script', '$pre_script'),
+	                ($new_host_id, 'pre_schedule', '$pre_schedule'),
+	                ($new_host_id, 'backup_period', ".$_POST['backup_period']."),
+	                ($new_host_id, 'backup_keep_period', ".$_POST['backup_keep_period']."),
+	                ($new_host_id, 'rsync_options', '".$_POST['rsync_options']."')
+	                ";
+	                $res = $db->query($sql);
+	                echo "<center><h3>Host <span>".$_POST['name']." (".$_POST['ip'].", id $new_host_id)</span> was successfully added";
+		}
+		else echo "<center><h3>Host <span>".$_POST['name']." (".$_POST['ip'].")</span> is already in database!";
 		break;
 
 
@@ -143,8 +153,9 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 		$enabled=0;
 		if(!empty($_POST['enabled']) && $_POST['enabled']=="on") $enabled=1;
 
-		$times=explode(",",$_POST['timestr']);
-		$updated_times=normalize_time_periods($times);
+//		$times=explode(",",$_POST['timestr']);
+//		$updated_times=normalize_time_periods($times);
+		$updated_times=normalize_time_periods($_POST['timestr']);
 
 		// If checkbox is on, scheduling script install
 		(isset($_POST['pre_install']) && $_POST['pre_install']=="on") ? $pre_install="1" : $pre_install="0";
@@ -241,6 +252,7 @@ if (empty($_GET['action'])) {
 
             if ($row['enabled']==1) $enablestr="Enabled, "; else $enablestr="Disabled, ";
             if ($row['pre_install']==1) $prestr="<br><span class='hint'>Pre-script install pending</span>"; else $prestr="";
+            if ($row['pre_install']==2) $prestr="<br><span class='hint red'>Pre-script install failed</span>"; else $prestr="";
             if ($row['worker']>=0) $workerstr=" (".$row['worker'].")"; else $workerstr="";
             echo '<td class="ip'.$color.' status'.$row['status'].' align-center">'.$enablestr.$status[$row['status']].$workerstr.$prestr.'</td>';
 
@@ -253,8 +265,9 @@ if (empty($_GET['action'])) {
             echo '<td class="ip'.$color.'">'.$row['description'].'</td>';
             echo '<td class="ip'.$color.'">
             <a href="index.php?host='.$row['id'].'&action=backup" class="red no-underline" title="Backup now!">&#128190;</a>
-            <a href="index.php?host='.$row['id'].'&action=edit" class="red no-underline" title="Edit host">&#128203;</a>
+            <a href="index.php?host='.$row['id'].'&action=edit" class="red no-underline" title="Edit host">&#128736;</a>
             <a href="index.php?host='.$row['id'].'&action=unlock" class="red no-underline" title="Unlock host">&#128275;</a>
+            <a href="index.php?host='.$row['id'].'&action=log" class="red no-underline" title="Last backup log">&#128220;</a>
             <a href="index.php?host='.$row['id'].'&action=delete" class="red no-underline" title="Delete host">&#10060;</a>
             </td>';
             echo '</tr>';
@@ -364,6 +377,27 @@ else {
 	        echo "<table border='0' cellspacing='5' cellpadding='5' width='100%'>";
         	DrawHost($host_data, $host_vars);
 	        echo "<tr><td></td><td class='ip1'><input type='submit' value='Apply changes'></td></tr></table>";
+                break;
+            case 'log':
+        	// Edit host
+                echo "<h2>Last backup log for ".$host_data['name']." (".$host_data['ip'].")</h2>";
+		if (file_exists("$backup_path/".$host_data['name']."/backup.log"))
+		{
+		    echo "<pre>";
+		    $fp = @fopen("$backup_path/".$host_data['name']."/backup.log", "r");
+		    if ($fp) {
+		        while (($buffer = fgets($fp, 4096)) !== false) {
+		            echo $buffer;
+		        }
+		        if (!feof($fp)) {
+		            echo "Error: unexpected fgets() fail\n";
+		        }
+		        fclose($fp);
+		    }
+		    else echo "Can not open backup log!";
+		    echo "</pre>";
+		}
+		else echo "No backup log available!";
                 break;
             default:
         	// Add new host
