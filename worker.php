@@ -69,6 +69,8 @@ while(true)
     	        $host_id=$row['id'];
 		$datestart = date("Y-m-d_H:i:s");
 
+		echo $datestart." - Starting cron script installation\n";
+
                 // Getting host vars
                 $sql="select * from hosts where id=".$host_id.";";
                 $res = $db->query($sql);
@@ -81,6 +83,7 @@ while(true)
                 }
 
                 $bkpath = $backup_path."/".$host_data['name'];
+		if (!is_dir($bkpath)) system("mkdir -p $bkpath");
                 file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
                 file_put_contents("$bkpath/tmp.cron", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n");
 	        system("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
@@ -89,16 +92,20 @@ while(true)
 	        $updateok=0;
                 $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
                 system($cmd, $return_code);
+                if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
                 $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
                 system($cmd, $return_code);
+                if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
                 $cmd = "scp $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
                 system($cmd, $return_code);
+                if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
-                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"service cron reload\"";
-                system($cmd, $return_code);
-                $updateok += $return_code;
+#                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"service cron reload\"";
+#                system($cmd, $return_code);
+#                if ($return_code>0) echo "Failed: $cmd\n";
+#                $updateok += $return_code;
 
 	        if($updateok==0)
 	        {
@@ -111,6 +118,8 @@ while(true)
 	        {
     		    echo "$datestart - [$worker_id] Host ".$host_data['name']." - failed to update pre-backup script\n"; 
     		    $db->rollback();
+        	    $sql="UPDATE hosts set pre_install=2 where id=".$host_id;
+		    $db->query($sql);
 	        }
 	    }
         }
@@ -215,7 +224,7 @@ while(true)
 
             // Backup itself
             system("truncate -s 0 $bkpath/backup.log");
-            $cmd = "/bin/rsync $rsync_opts --relative --log-file=$bkpath/backup.log --progress -e \"/usr/bin/ssh -oConnectTimeout=10 -oPasswordAuthentication=no -oStrictHostKeyChecking=no -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ > /dev/null 2>&1";
+            $cmd = "$cmd_rsync $rsync_opts --relative --log-file=$bkpath/backup.log --progress -e \"/usr/bin/ssh -oConnectTimeout=10 -oPasswordAuthentication=no -oStrictHostKeyChecking=no -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ > /dev/null 2>&1";
             system($cmd, $return_code);
 
             $dateend = date("Y-m-d H:i:s");
