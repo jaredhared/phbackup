@@ -17,6 +17,7 @@ It runs at a backup server and allows you to configure and manage backups of you
 * There is a deduplication system implemented in PHBackup, so every folder for some day will contain whole files and directory structure, but all unchanged files will be saved only once at disk. All other copies will be just hard links to save disk space.
 * There is a simple and handy web interface to manage your hosts, view status of their backups, run backups manually etc.
 * After addifion of backup server SSH key to the target host, automatic pre-script deployment is supported, to prepare data like database dumps for backup.
+* Backup logs can be viewed from web interface
 
 ## How it works
 
