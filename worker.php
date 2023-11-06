@@ -223,9 +223,9 @@ while(true)
             file_put_contents("$bkpath/files.txt", base64_decode($host_vars['include_paths']));
 
             // Backup itself
-            system("truncate -s 0 $bkpath/backup.log");
-            $cmd = "$cmd_rsync $rsync_opts --relative --log-file=$bkpath/backup.log --progress -e \"/usr/bin/ssh -oConnectTimeout=10 -oPasswordAuthentication=no -oStrictHostKeyChecking=no -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ > /dev/null 2>&1";
-            system($cmd, $return_code);
+            $cmd = "truncate -s 0 $bkpath/backup.log; $cmd_rsync $rsync_opts --partial --relative --log-file=$bkpath/backup.log --progress -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ >/dev/null 2>&1 </dev/null";
+            exec($cmd, $output, $return_code);
+            $output = '';
 
             $dateend = date("Y-m-d H:i:s");
 
