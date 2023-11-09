@@ -83,23 +83,23 @@ while(true)
                 }
 
                 $bkpath = $backup_path."/".$host_data['name'];
-		if (!is_dir($bkpath)) system("mkdir -p $bkpath");
+		if (!is_dir($bkpath)) exec("mkdir -p $bkpath");
                 file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
                 file_put_contents("$bkpath/tmp.cron", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n");
-	        system("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
-	        system("tr -d '\r' < $bkpath/tmp.cron > $bkpath/phbackup && rm $bkpath/tmp.cron");
+	        exec("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
+	        exec("tr -d '\r' < $bkpath/tmp.cron > $bkpath/phbackup && rm $bkpath/tmp.cron");
 
 	        $updateok=0;
                 $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
-                system($cmd, $return_code);
+                exec($cmd, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
                 $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
-                system($cmd, $return_code);
+                exec($cmd, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
                 $cmd = "scp $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
-                system($cmd, $return_code);
+                exec($cmd, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
 #                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"service cron reload\"";
@@ -212,7 +212,7 @@ while(true)
 	    cli_set_process_title("phbackup-$worker_id [backing ".$host_data['name']."]");
 
             // Check if directory exists
-            if (!is_dir("$backup_path/".$host_data['name'])) system ("mkdir -p $backup_path/".$host_data['name']);
+            if (!is_dir("$backup_path/".$host_data['name'])) exec("mkdir -p $backup_path/".$host_data['name']);
 
             $datestamp = date("Y-m-d_H:i:s");
             $bkpath = $backup_path."/".$host_data['name'];
@@ -223,15 +223,16 @@ while(true)
             file_put_contents("$bkpath/files.txt", base64_decode($host_vars['include_paths']));
 
             // Backup itself
-            $cmd = "truncate -s 0 $bkpath/backup.log; $cmd_rsync $rsync_opts --partial --relative --log-file=$bkpath/backup.log --progress -e \"/usr/bin/ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ >/dev/null 2>&1 </dev/null";
-            exec($cmd, $output, $return_code);
-            $output = '';
+            $outputdel = exec("truncate -s 0 $bkpath/backup.log; $cmd_rsync $rsync_opts --partial --relative --log-file=$bkpath/backup.log --progress -e \"nice -n 19 /usr/bin/ssh -ocompression=no -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ >/dev/null 2>/dev/null");
+            $return_code = exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'");
+            if(empty($return_code)) { $return_code = '0'; };
+            $outputdel = '';
 
             $dateend = date("Y-m-d H:i:s");
 
             // Checking results
             if ($return_code>0 && $return_code!=23 && $return_code!=24) {
-            	    system ("rm -rf $bkpath/processing-$datestamp");
+            	    exec("rm -rf $bkpath/processing-$datestamp");
             	    echo "$dateend - [$worker_id] Something was wrong, backup failed!\n";
                     $sql="UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=$host_id";
                     $db->query($sql);
@@ -239,13 +240,13 @@ while(true)
                     $busy=0;
             }
             else {
-                system("mv $bkpath/processing-$datestamp $bkpath/$datestamp && rm -f $bkpath/111-Latest && ln -s $bkpath/$datestamp $bkpath/111-Latest");
+                exec("mv $bkpath/processing-$datestamp $bkpath/$datestamp && rm -f $bkpath/111-Latest && ln -s $bkpath/$datestamp $bkpath/111-Latest");
                 $sql="UPDATE hosts set worker=-1, last_backup='$datestart', status=0, next_try=DATE_ADD('$nextbackup', INTERVAL $backup_period HOUR), backup_now=0 where id=$host_id";
                 $db->query($sql);
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
     	        cli_set_process_title("phbackup-$worker_id [cleaning]");
-		system("find $bkpath -maxdepth 1 -type d -mtime +".$host_vars['backup_keep_period']." -exec rm -rvf '{}' \\;");
+		exec("find $bkpath -maxdepth 1 -type d -mtime +".$host_vars['backup_keep_period']." -exec rm -rvf '{}' \\;");
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups\n";
     	        cli_set_process_title("phbackup-$worker_id [idle]");
     	        $busy=0;
