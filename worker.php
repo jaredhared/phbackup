@@ -246,7 +246,7 @@ while(true)
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
     	        cli_set_process_title("phbackup-$worker_id [cleaning]");
-		exec("find $bkpath -maxdepth 1 -type d -mtime +".$host_vars['backup_keep_period']." -exec rm -rvf '{}' \\;");
+		exec("find $bkpath -maxdepth 1 -type d -mtime +".$host_vars['backup_keep_period']." -exec rm -rf '{}' \\;");
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups\n";
     	        cli_set_process_title("phbackup-$worker_id [idle]");
     	        $busy=0;
