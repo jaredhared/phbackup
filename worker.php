@@ -90,6 +90,9 @@ while(true)
 	        exec("tr -d '\r' < $bkpath/tmp.cron > $bkpath/phbackup && rm $bkpath/tmp.cron");
 
 	        $updateok=0;
+                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"mkdir -p /opt > /dev/null 2>&1\"";
+                exec($cmd, $output, $return_code);
+                if ($return_code>0) echo "Failed: $cmd\n";
                 $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
                 exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
