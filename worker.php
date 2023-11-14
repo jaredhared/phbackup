@@ -160,6 +160,7 @@ while(true)
         $datestart = date("Y-m-d H:i:s");
         $nextbackup = date("Y-m-d H:i:00");
 	$timeok=false;
+	$backupnow=false;
 
 
 	// Checking time slots
@@ -175,7 +176,7 @@ while(true)
 	    }
 
 	    // Handling "Backup now"
-	    if ($row['backup_now']==1) $timeok=true;
+	    if ($row['backup_now']==1) { $timeok=true; $backupnow=true; }
 
 	}
 
@@ -241,13 +242,17 @@ while(true)
             }
             else {
                 exec("mv $bkpath/processing-$datestamp $bkpath/$datestamp && rm -f $bkpath/111-Latest && ln -s $bkpath/$datestamp $bkpath/111-Latest");
-                $sql="UPDATE hosts set worker=-1, last_backup='$datestart', status=0, next_try=DATE_ADD('$nextbackup', INTERVAL $backup_period HOUR), backup_now=0 where id=$host_id";
-                $db->query($sql);
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
-    	        cli_set_process_title("phbackup-$worker_id [cleaning]");
+    	        cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
 		exec("find $bkpath -maxdepth 1 -type d -mtime +".$host_vars['backup_keep_period']." -exec rm -rf '{}' \\;");
     	        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups\n";
+
+                $next_try_str="DATE_ADD('$nextbackup', INTERVAL $backup_period HOUR)";
+                if ($backupnow) $next_try_str="NOW()";
+                $sql="UPDATE hosts set worker=-1, last_backup='$datestart', status=0, next_try=$next_try_str, backup_now=0 where id=$host_id";
+                $db->query($sql);
+
     	        cli_set_process_title("phbackup-$worker_id [idle]");
     	        $busy=0;
             }
