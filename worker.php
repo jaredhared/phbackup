@@ -91,15 +91,15 @@ while(true)
 
 	        $updateok=0;
                 $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
-                exec($cmd, $return_code);
+                exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
                 $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
-                exec($cmd, $return_code);
+                exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
                 $cmd = "scp $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
-                exec($cmd, $return_code);
+                exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
 #                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"service cron reload\"";
@@ -224,10 +224,10 @@ while(true)
             file_put_contents("$bkpath/files.txt", base64_decode($host_vars['include_paths']));
 
             // Backup itself
-            $outputdel = exec("truncate -s 0 $bkpath/backup.log; $cmd_rsync $rsync_opts --partial --relative --log-file=$bkpath/backup.log --progress -e \"nice -n 19 /usr/bin/ssh -ocompression=no -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ >/dev/null 2>/dev/null");
-            $return_code = exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'");
+            exec("truncate -s 0 $bkpath/backup.log; $cmd_rsync $rsync_opts --partial --relative --log-file=$bkpath/backup.log --progress -e \"nice -n 19 /usr/bin/ssh -ocompression=no -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ >/dev/null 2>/dev/null");
+//            $return_code = exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'");
+            exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'", $output, $return_code);
             if(empty($return_code)) { $return_code = '0'; };
-            $outputdel = '';
 
             $dateend = date("Y-m-d H:i:s");
 
