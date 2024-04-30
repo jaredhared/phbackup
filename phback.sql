@@ -29,8 +29,18 @@ CREATE TABLE `host_vars` (
   `value` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `host` (`host`,`var`)
-) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `host_vars` WRITE;
+/*!40000 ALTER TABLE `host_vars` DISABLE KEYS */;
+INSERT INTO `host_vars` VALUES
+(1,10000,'version','150'),
+(2,10000,'version_text','1.5.0');
+/*!40000 ALTER TABLE `host_vars` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
 
 --
 -- Table structure for table `hosts`

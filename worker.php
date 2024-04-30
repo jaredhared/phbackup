@@ -14,6 +14,16 @@ if (PHP_SAPI != "cli") {
 // Settings
 include("/etc/phbackup/opt.php");
 
+// Functions
+//try {
+//    require '/etc/phbackup/functions.php';
+//}
+//catch (Error $e) {
+//    // debugging example:
+//    die('Caught error => ' . $e->getMessage());
+//}
+
+
 $rsync_opts = "-vbrltz";
 $ticker_step=5;
 

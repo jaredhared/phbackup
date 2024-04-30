@@ -6,8 +6,23 @@
 // Settings
 include("/etc/phbackup/opt.php");
 
+// Functions
+try {
+    require '/etc/phbackup/functions.php';
+}
+catch (Error $e) {
+    // debugging example:
+    die('Caught error => ' . $e->getMessage());
+}
+
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $db=mysqli_connect($db_host,$db_user,$db_pass, $db_name);
+
+// Getting vars from DB
+$script_vars = get_script_vars($db);
+isset($script_vars['version']) ? $script_ver = $script_vars['version'] : $script_ver = 1;
+isset($script_vars['version_text']) ? $script_ver_text = $script_vars['version_text'] : $script_ver_text = "pre-1.5.0";
 
 
 function DrawHost($host_data, $host_vars) {
@@ -80,12 +95,12 @@ function normalize_time_periods($timestr) {
 
 <html>
 <head>
-<title>PHBackup <?php echo $script_ver; ?></title>
+<title>PHBackup <?php echo $script_ver_text; ?></title>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<h1>PHBackup <?php echo $script_ver; ?></h1>
+<h1>PHBackup <?php echo $script_ver_text; ?></h1>
 <a href = "index.php" class="no-underline">🏠 Home page</a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a href = "index.php?action=add" class="no-underline">➕ Add host</a>
@@ -99,6 +114,21 @@ function normalize_time_periods($timestr) {
 
 
 <?php
+
+// Checking if we need an upgrade
+
+$upgrade_versions = is_upgraded($db);
+$upgrade_path = $script_ver_text;
+
+if (is_array($upgrade_versions)) {
+    foreach ($upgrade_versions as $short => $version ) { if ($short > $script_ver) $upgrade_path .= " => $version"; }
+
+    echo "<center><b>An upgrade is needed: $upgrade_path<br><br> Please upgrade your PHBackup installation before use!</b></center>";
+    die();
+};
+
+
+
 
 // Performing actions
 if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
