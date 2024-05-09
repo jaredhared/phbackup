@@ -92,7 +92,7 @@ while(true)
                     $host_vars[$row['var']] = $row['value'];
                 }
 
-                $bkpath = $backup_path."/".$host_data['name'];
+                $bkpath = $backup_path."/".$host_data['backup_dir']."/".$host_data['name'];
 		if (!is_dir($bkpath)) exec("mkdir -p $bkpath");
                 file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
                 file_put_contents("$bkpath/tmp.cron", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n");
@@ -226,10 +226,10 @@ while(true)
 	    cli_set_process_title("phbackup-$worker_id [backing ".$host_data['name']."]");
 
             // Check if directory exists
-            if (!is_dir("$backup_path/".$host_data['name'])) exec("mkdir -p $backup_path/".$host_data['name']);
+            if (!is_dir("$backup_path/"."/".$host_vars['backup_dir']."/".$host_data['name'])) exec("mkdir -p $backup_path/"."/".$host_vars['backup_dir']."/".$host_data['name']);
 
             $datestamp = date("Y-m-d_H:i:s");
-            $bkpath = $backup_path."/".$host_data['name'];
+            $bkpath = $backup_path."/".$host_vars['backup_dir']."/".$host_data['name'];
 	    $backup_period=$host_vars['backup_period'];
 
             // Generating include/exclude files

@@ -47,7 +47,7 @@ function is_upgraded($db) {
         return true;
     }
     else {
-//        echo "Max version $max_ver_text is higher then current $script_ver_text. \nUpgrade path is $upgrade_path\n";
+//        echo "Max version $max_ver_text is higher then current $script_ver_text ($max_ver > $script_ver). \nUpgrade path is $upgrade_path\n";
         return $upgrade_versions;
     }
 
@@ -105,15 +105,33 @@ function upgrade_150_1_5_0($db) {
 };
 
 
-function upgrade_158_1_5_8($db) {
+function upgrade_151_1_5_1($db) {
+
+    echo "Upgrading to 1.5.1... ";
+
+    $sql="select * from hosts where id<>10000;";
+    $res = $db->query($sql);
+    $ok=0;
+    while ($row = $res->fetch_array()) {
+        $sql="INSERT INTO host_vars (host,var,value) VALUES (".$row['id'].", 'backup_dir', '') "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
+    }
+
+    $ok == $res->num_rows ? $ok=1 : $ok=0;
+
+    if (!isset($script_vars['version'])) {$sql="UPDATE host_vars SET value=151 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+    if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.5.1' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+
+    if ($ok==3) { echo "Done!\n"; return true; } 
+    else { echo "Error!\n"; return false; }
 };
 
+/*
 function upgrade_152_1_5_2($db) {
 };
 
 function upgrade_153_1_5_3($db) {
 };
-
+*/
 
 
 

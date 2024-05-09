@@ -37,6 +37,7 @@ function DrawHost($host_data, $host_vars) {
     if (isset($host_data['ssh_key'])) $ssh_key=$host_data['ssh_key'];
     if (isset($host_data['time_slots'])) $time_slots=$host_data['time_slots']; else $time_slots="2-6";
     if (isset($host_data['enabled']) && $host_data['enabled']==1) $enabled="checked"; else $enabled="";
+    if (isset($host_vars['backup_dir'])) $backup_dir=$host_vars['backup_dir']; else $backup_dir="";
     if (isset($host_vars['backup_period'])) $bperiod=$host_vars['backup_period']; else $bperiod=24;
     if (isset($host_vars['backup_keep_period'])) $backup_keep_period=$host_vars['backup_keep_period']; else $backup_keep_period=30;
     if (isset($host_vars['rsync_options'])) $rsync_options=$host_vars['rsync_options']; else $rsync_options="-vbrltz";
@@ -54,6 +55,7 @@ function DrawHost($host_data, $host_vars) {
     echo "<tr><td class='ip1'>Backup time slots<br><span class=hint>Hours of day, during which backups are allowed, in comma separated, dash-delimited periods, like 0-2,4-7,8-11</span></td><td class='ip1'><input type='text' size='100' name='timestr' value='".$time_slots."'></td></tr>";
     echo "<tr><td class='ip1'>Backup keep period<br><span class=hint>For which time to store backups, days</span></td><td class='ip1'><input type='text' size='100' name='backup_keep_period' value='$backup_keep_period'></td></tr>";
     echo "<tr><td class='ip1'>Rsync options</td><td class='ip1'><input type='text' size='100' name='rsync_options' value='$rsync_options'></td></tr>";
+    echo "<tr><td class='ip1'>Backup directory<br><span class=hint>Subdirectory inside main backup storage where to store this host backups, like /switches/ - default is empty</span></td><td class='ip1'><input type='text' size='100' name='backup_dir' value='$backup_dir'></td></tr>";
     echo "<tr><td class='ip1'>Pre-backup script<br><span class='hint'>A script which prepares data on the target server - dumps databases etc.</span><br><br><p style=\"color:#ff0000;\"><b>WARNING: this script will be run as root, <br>so it potentially can break your system!<br><br>Test it first and run very carefully!</b></p></td><td class='ip1'><textarea name='pre_script' cols=70 rows=10>$pre_script</textarea></td></tr>";
     echo "<tr><td class='ip1'>Pre-backup script schedule<br><span class='hint'>Crontab entity for pre-backup script. <br>Script name is /opt/phbackup.sh, cron file is being placed inside /etc/cron.d</span></td><td class='ip1'><input type='text' size='100' name='pre_schedule' value='".$pre_schedule."'></td></tr>";
     echo "<tr><td class='ip1'>Install pre-backup script<br><span class=hint>Install new script or update existing script and cron settings</span></td><td class='ip1'><input type='checkbox' name='pre_install' unchecked></td></tr>";
@@ -164,6 +166,7 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
 	                ($new_host_id, 'exclude_paths', '$exclude_paths'),
 	                ($new_host_id, 'pre_script', '$pre_script'),
 	                ($new_host_id, 'pre_schedule', '$pre_schedule'),
+	                ($new_host_id, 'backup_dir', ".$_POST['backup_dir']."),
 	                ($new_host_id, 'backup_period', ".$_POST['backup_period']."),
 	                ($new_host_id, 'backup_keep_period', ".$_POST['backup_keep_period']."),
 	                ($new_host_id, 'rsync_options', '".$_POST['rsync_options']."')
@@ -208,10 +211,12 @@ if (!empty($_POST['confirm']) && $_POST['confirm']=="yes")
                 $pre_script = base64_encode($_POST['pre_script']);
                 $pre_schedule = base64_encode($_POST['pre_schedule']);
 
+		$db->query("UPDATE host_vars SET value='$backup_dir' WHERE host=".$_POST['id']." AND var='backup_dir'");
 		$db->query("UPDATE host_vars SET value='$pre_script' WHERE host=".$_POST['id']." AND var='pre_script'");
 		$db->query("UPDATE host_vars SET value='$pre_schedule' WHERE host=".$_POST['id']." AND var='pre_schedule'");
 		$db->query("UPDATE host_vars SET value='$include_paths' WHERE host=".$_POST['id']." AND var='include_paths'");
 		$db->query("UPDATE host_vars SET value='$exclude_paths' WHERE host=".$_POST['id']." AND var='exclude_paths'");
+		$db->query("UPDATE host_vars SET value='".$_POST['backup_dir']."' WHERE host=".$_POST['id']." AND var='backup_dir'"); 
 		$db->query("UPDATE host_vars SET value='".$_POST['backup_period']."' WHERE host=".$_POST['id']." AND var='backup_period'");
 		$db->query("UPDATE host_vars SET value='".$_POST['backup_keep_period']."' WHERE host=".$_POST['id']." AND var='backup_keep_period'");
 		$db->query("UPDATE host_vars SET value='".$_POST['rsync_options']."' WHERE host=".$_POST['id']." AND var='rsync_options'");
