@@ -104,7 +104,6 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
             $sql="UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=$host_id";
             $db->query($sql);
 	    cli_set_process_title("phbackup-$worker_id [idle]");
-            $busy=0;
         }
         else {
             exec("mv $bkpath/processing-$datestamp $bkpath/$datestamp && rm -f $bkpath/111-Latest && ln -s $bkpath/$datestamp $bkpath/111-Latest");
@@ -120,9 +119,96 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
             $db->query($sql);
 
             cli_set_process_title("phbackup-$worker_id [idle]");
-            $busy=0;
         }
 
 }
+
+
+function backup_cisco_switch_via_telnet ($db, $host_data, $host_vars) {
+        $port = $host_data['port'];
+        $timeout = 10;
+        $host = $host_data['ip'];
+        $username = $host_data['user'];
+        $password = $host_data['ssh_key'];
+
+
+        global $backup_path, $worker_id, $cmd_rsync, $rsync_opts, $nextbackup, $datestart, $host_id;
+
+        // Setting process title
+        cli_set_process_title("phbackup-$worker_id [backing ".$host_data['name']."]");
+
+        $datestamp = date("Y-m-d_H:i:s");
+        $bkpath = $backup_path."/".$host_data['path']."/".$host_data['name'];
+        $backup_period=$host_vars['backup_period'];
+
+        // Check if directory exists
+        if (!is_dir("$bkpath")) exec("mkdir -p $bkpath");
+
+
+        $script="#!/bin/bash
+        (
+        echo \"open $host $port\"
+        sleep 10
+        echo \"$username\"
+        sleep 5
+        echo \"$password\"
+        sleep 5
+        echo \"term len 0\"
+        sleep 5
+        echo \"sh run\"
+        sleep 10
+        echo \"exit\"
+        ) | telnet > $bkpath/tmp.txt
+        tac $bkpath/tmp.txt | sed '/Current configuration/Q' | sed '/show running-config/Q' | tac > $bkpath/$datestamp.txt
+        sed -i '\$d' $bkpath/$datestamp.txt
+        rm -f $bkpath/tmp.txt
+        ";
+
+
+        // Generating include/exclude files
+        file_put_contents("$bkpath/backup.sh", $script);
+        exec("chmod +x $bkpath/backup.sh");
+
+        // Backup itself
+        exec("$bkpath/backup.sh 2>&1");
+//        exec("$bkpath/backup.sh >/dev/null 2>/dev/null");
+//        exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'", $output, $return_code);
+        if(empty($return_code)) { $return_code = '0'; };
+        if (!filesize("$bkpath/$datestamp.txt") || filesize("$bkpath/$datestamp.txt") < 2000) $return_code=1;
+
+        $dateend = date("Y-m-d H:i:s");
+
+        // Checking results
+        if ($return_code>0 && $return_code!=23 && $return_code!=24) {
+	    exec("mv -f $bkpath/$datestamp.txt $bkpath/error-$datestamp.txt");
+	    echo "$dateend - [$worker_id] Something was wrong, backup failed!\n";
+            $sql="UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=$host_id";
+            $db->query($sql);
+	    cli_set_process_title("phbackup-$worker_id [idle]");
+        }
+        else {
+            exec("rm -f $bkpath/111-Latest.txt && ln -s $bkpath/$datestamp.txt $bkpath/111-Latest.txt");
+            echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
+            echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
+            cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
+            exec("find $bkpath -maxdepth 1 -type f -mtime +".$host_vars['backup_keep_period']." -exec rm -rf '{}' \\;");
+            echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups\n";
+
+            $next_try_str="DATE_ADD('$nextbackup', INTERVAL $backup_period HOUR)";
+            if ($host_data['backup_now']==1) $next_try_str="NOW()";
+            $sql="UPDATE hosts set worker=-1, last_backup='$datestart', status=0, next_try=$next_try_str, backup_now=0 where id=$host_id";
+            $db->query($sql);
+
+            cli_set_process_title("phbackup-$worker_id [idle]");
+        }
+
+        exec("rm -f $bkpath/backup.sh");
+
+
+}
+
+
+
+
 
 ?>

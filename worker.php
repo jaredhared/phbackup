@@ -82,7 +82,7 @@ while(true)
 		echo $datestart." - Starting cron script installation\n";
 
                 // Getting host vars
-                $sql="select * from hosts where id=".$host_id.";";
+                $sql="SELECT hosts.*, host_groups.path FROM `hosts`,host_groups WHERE hosts.id=".$host_id." and hosts.group_id=host_groups.id;";
                 $res = $db->query($sql);
                 $host_data = $res->fetch_array();
 
@@ -92,7 +92,7 @@ while(true)
                     $host_vars[$row['var']] = $row['value'];
                 }
 
-                $bkpath = $backup_path."/".$host_data['backup_dir']."/".$host_data['name'];
+                $bkpath = $backup_path."/".$host_data['path']."/".$host_data['name'];
 		if (!is_dir($bkpath)) exec("mkdir -p $bkpath");
                 file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
                 file_put_contents("$bkpath/tmp.cron", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n");
@@ -151,14 +151,16 @@ while(true)
         $host_id=0;
         $db->begin_transaction();
 
-        $sql="SELECT hosts.id, hosts.name, hosts.enabled, hosts.worker, hosts.last_backup, host_vars.value, hosts.time_slots, hosts.next_try, hosts.backup_now
-    	    FROM `hosts` left JOIN host_vars on hosts.id=host_vars.host 
-    	    WHERE host_vars.var='backup_period' 
-    	    AND hosts.enabled=1 
-    	    AND hosts.worker=-1 
-    	    AND ( hosts.next_try<NOW()
+        $sql="SELECT hosts.id, hosts.name, hosts.enabled, hosts.worker, hosts.last_backup, host_vars.value, hosts.time_slots, hosts.next_try, hosts.backup_now, host_groups.path as path
+	    FROM `hosts` 
+            LEFT JOIN host_vars on hosts.id=host_vars.host 
+            LEFT JOIN host_groups on hosts.group_id=host_groups.id
+	    WHERE host_vars.var='backup_period' 
+	    AND hosts.enabled=1 
+	    AND hosts.worker=-1 
+	    AND ( hosts.next_try<NOW()
 	    OR hosts.backup_now=1 )
-    	    ORDER BY RAND() LIMIT 0,1 FOR UPDATE";
+	    ORDER BY RAND() LIMIT 0,1 FOR UPDATE";
 	try {
     	    $res = $db->query($sql);
 	    if ($res === FALSE) {
@@ -189,7 +191,8 @@ while(true)
 	    }
 
 	    // Handling "Backup now"
-	    if ($row['backup_now']==1) { $timeok=true; $backupnow=true; }
+	    if ($row['backup_now']==1) { $timeok=true; $backupnow=true; echo "$datestart - [$worker_id] Host ".$row['name']." - found Backup Now flag\n"; }
+            
 
 	}
 
@@ -212,7 +215,7 @@ while(true)
         if ($host_id>0)
         {
             // Getting host vars
-            $sql="select * from hosts where id=".$host_id.";";
+            $sql="SELECT hosts.*, host_groups.path FROM `hosts`,host_groups WHERE hosts.id=".$host_id." and hosts.group_id=host_groups.id;";
             $res = $db->query($sql);
             $host_data = $res->fetch_array();
 
@@ -224,6 +227,7 @@ while(true)
 
 
             run_backup ($db, $host_data, $host_vars);
+            $busy=0;
 
         }
 
