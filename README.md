@@ -93,7 +93,7 @@ To update script, you need to do few steps:
 
 > Why PHP?
 
-I just know it better, it was the best way to write this in just one day. Also, it is handy when it comes to write web interfaces.
+I just know it better, it was the best way to write a first version in just one day. Also, it is handy when it comes to write web interfaces.
 
 > Why there is no authorization?
 
