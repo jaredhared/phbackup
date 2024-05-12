@@ -1,5 +1,10 @@
 # PHBackup changelog
 
+## 1.6.1
+
+* Fixed Rsync status handling
+* Fixed upgrade bug
+
 ## 1.6.0
 
 * Fixed workers staying in busy state

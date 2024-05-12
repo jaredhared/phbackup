@@ -111,7 +111,7 @@ function upgrade_160_1_6_0($db) {
     echo "Upgrading to 1.6.0... ";
 
     $ok=0;
-    $sql="DELETE FROM host_vars WHERE var='backup_function'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
+    $sql="DELETE FROM host_vars WHERE var='backup_dir'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
     $sql="CREATE TABLE `host_groups` (`id` int(11) NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL, `path` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
     $sql="ALTER TABLE `hosts` ADD `group_id` INT NOT NULL DEFAULT '1' AFTER `description`;"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
     $sql="INSERT INTO `host_groups` (`id`, `name`, `path`) VALUES (NULL, 'Servers', '');"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
@@ -126,7 +126,26 @@ function upgrade_160_1_6_0($db) {
 };
 
 
+function upgrade_161_1_6_1($db) {
+    echo "Upgrading to 1.6.1... ";
 
+    $sql="select * from hosts where id<>10000;";
+    $res = $db->query($sql);
+    $ok=0;
+    while ($row = $res->fetch_array()) {
+        if ($row['group_id']==1) $sql="INSERT INTO host_vars (host,var,value) VALUES (".$row['id'].", 'backup_function', 'backup_server_via_ssh') "; 
+        if ($row['group_id']==2) $sql="INSERT INTO host_vars (host,var,value) VALUES (".$row['id'].", 'backup_function', 'backup_cisco_switch_via_telnet') "; 
+        $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
+    }
+
+    $ok == $res->num_rows ? $ok=1 : $ok=0;
+
+    if (!isset($script_vars['version'])) {$sql="UPDATE host_vars SET value=161 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+    if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.6.1' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+
+    if ($ok==3) { echo "Done!\n"; return true; } 
+    else { echo "Error!\n"; return false; }
+};
 
 
 

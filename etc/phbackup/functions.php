@@ -92,10 +92,14 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         // Backup itself
         exec("truncate -s 0 $bkpath/backup.log; $cmd_rsync $rsync_opts --partial --relative --log-file=$bkpath/backup.log --progress -e \"nice -n 19 /usr/bin/ssh -ocompression=no -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port']."\" --delete --timeout=600 --ignore-errors --exclude-from=$bkpath/exclude.txt --files-from=$bkpath/files.txt --link-dest=../111-Latest ".$host_data['user']."@".$host_data['ip'].":/ $bkpath/processing-$datestamp/ >/dev/null 2>/dev/null");
 //            $return_code = exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'");
-        exec("tail -n 1 $bkpath/backup.log|grep code|sed 's/.*code\s//;s/).*//'", $output, $return_code);
-        if(empty($return_code)) { $return_code = '0'; };
+        exec("tail -n 1 $bkpath/backup.log | grep code | sed 's/.*code\s//;s/).*//' | tr -d '\n' > $bkpath/backup.code", $output, $return_code);
+        exec("head -1 $bkpath/backup.code", $output, $return_code);
+//        if(empty($return_code)) { $return_code = '0'; };
+        $return_code = file_get_contents("$bkpath/backup.code");
 
         $dateend = date("Y-m-d H:i:s");
+        echo "$dateend - [$worker_id] Host ".$host_data['name']." - Rsync finished with code $return_code!\n";
+
 
         // Checking results
         if ($return_code>0 && $return_code!=23 && $return_code!=24) {
