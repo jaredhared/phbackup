@@ -1,7 +1,7 @@
 # PHBackup - a Linux/Unix backup daemon
 
-PHBackup is a simple and fast backup solution to make backups of Linux/Unix hosts. 
-It runs at a backup server and allows you to configure and manage backups of your machines.
+PHBackup is a simple and fast backup solution to make backups of Linux/Unix machines and some devices like switches. 
+It runs at a backup server and allows you to configure and manage backups of your hosts.
 
 ## Screenshots
 
@@ -49,16 +49,41 @@ It runs at a backup server and allows you to configure and manage backups of you
 2. Also, you have to add a line to /etc/crontab: `*/5 * * * *	root	/bin/php /path/to/your/www/zabbix.php > /tmp/phbackup.zabbix`
 3. After that, copy zabbix/phbackup.conf to /etc/zabbix/zabbix_agent2.d and import template from PHBackup.yaml to your Zabbix server
 
-
 ## Usage
 1. Add a SSH key of backup server to the target machine and allow backup server to login as root with key-based authorization
 2. Create a host in web interface and adjust its parameters
 3. If it is enabled, backups will run automatically
 
+## Usage - switches
+### Cisco Catalyst
+1. Enable aaa at the switch:
+`conf t
+aaa new-model
+aaa authentication login default`
+2. Create a host in PHbackup, with backup_cisco_switch_via_telnet as backup function
+
+### Cisco Nexus
+1. Enable telnet at the switch:
+`conf t
+feature telnet`
+2. Create a host in PHbackup, with backup_cisco_switch_via_telnet as backup function
+
+### Other switches/devices
+You can add an appropriate function named backup_xxxxxxx to the /etc/phbackup/functions.php. After that it will be selectable as a backup function for hosts.
+
+## Host groups
+Since v. 1.6.0, host groups are supported. They are useful to place your hosts into subdirs inside backup directory, for example, servers by default are in the root of backup directory and switches are inside Switches folder.
+
 ## Pre-backup scripts
 * PHbackup supports so-called pre-backup scripts, which allows to prepare data on the target host for backup: dump databases etc.
 * Pre-backup script is a regular shell script, which will be run as scheduled by Cron daemon.
 * You can customize both pre-backup script and cron line which will run it. If you will check "Install pre-backup script" checkbox, script will be deployed to the /opt/ directory on target host, and cron file will be placed in /etc/cron.d/.
+
+## Script updating
+To update script, you need to do few steps:
+1. Update sources from Git
+2. Place script files inside appropriate directories (daemon, web interface and /etc/ part)
+3. Run upgrade.php to update database
 
 ## FAQ
 
