@@ -57,15 +57,19 @@ It runs at a backup server and allows you to configure and manage backups of you
 ## Usage - switches
 ### Cisco Catalyst
 1. Enable aaa at the switch:
-    conf t
-    aaa new-model
-    aaa authentication login default
+```
+conf t
+aaa new-model
+aaa authentication login default
+```
 2. Create a host in PHbackup, with backup_cisco_switch_via_telnet as backup function
 
 ### Cisco Nexus
 1. Enable telnet at the switch:
-    conf t
-    feature telnet
+```
+conf t
+feature telnet
+```
 2. Create a host in PHbackup, with backup_cisco_switch_via_telnet as backup function
 
 ### Other switches/devices
