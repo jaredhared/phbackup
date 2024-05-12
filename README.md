@@ -62,7 +62,7 @@ conf t
 aaa new-model
 aaa authentication login default
 ```
-2. Create a host in PHbackup, with backup_cisco_switch_via_telnet as backup function
+2. Create a host in PHbackup, with **backup_cisco_switch_via_telnet** as backup function
 
 ### Cisco Nexus
 1. Enable telnet at the switch:
@@ -70,7 +70,7 @@ aaa authentication login default
 conf t
 feature telnet
 ```
-2. Create a host in PHbackup, with backup_cisco_switch_via_telnet as backup function
+2. Create a host in PHbackup, with **backup_cisco_switch_via_telnet** as backup function
 
 ### Other switches/devices
 You can add an appropriate function named backup_xxxxxxx to the /etc/phbackup/functions.php. After that it will be selectable as a backup function for hosts.
