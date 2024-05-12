@@ -79,10 +79,10 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         cli_set_process_title("phbackup-$worker_id [backing ".$host_data['name']."]");
 
         // Check if directory exists
-        if (!is_dir("$backup_path/"."/".$host_vars['backup_dir']."/".$host_data['name'])) exec("mkdir -p $backup_path/"."/".$host_vars['backup_dir']."/".$host_data['name']);
+        if (!is_dir("$backup_path/"."/".$host_data['path']."/".$host_data['name'])) exec("mkdir -p $backup_path/"."/".$host_data['path']."/".$host_data['name']);
 
         $datestamp = date("Y-m-d_H:i:s");
-        $bkpath = $backup_path."/".$host_vars['backup_dir']."/".$host_data['name'];
+        $bkpath = $backup_path."/".$host_data['path']."/".$host_data['name'];
         $backup_period=$host_vars['backup_period'];
 
         // Generating include/exclude files
@@ -98,11 +98,11 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         $return_code = file_get_contents("$bkpath/backup.code");
 
         $dateend = date("Y-m-d H:i:s");
-        echo "$dateend - [$worker_id] Host ".$host_data['name']." - Rsync finished with code $return_code!\n";
 
 
         // Checking results
         if ($return_code>0 && $return_code!=23 && $return_code!=24) {
+            echo "$dateend - [$worker_id] Host ".$host_data['name']." - Rsync finished with code $return_code!\n";
 	    exec("rm -rf $bkpath/processing-$datestamp");
 	    echo "$dateend - [$worker_id] Something was wrong, backup failed!\n";
             $sql="UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=$host_id";
