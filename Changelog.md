@@ -3,6 +3,7 @@
 ## 1.6.2
 * Fixed a typo in default pre_script leading to mariabackup error
 * Updated pre-scripts for all hosts in group id 1 (servers)
+* Fixed SSH options for pre-script installation
 * Added /etc/phbackup/functions.custom.php
 
 ## 1.6.1
