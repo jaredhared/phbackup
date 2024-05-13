@@ -37,7 +37,8 @@ $default_pre_schedule="15 0 * * * root /opt/phbackup.sh > /var/log/phbackup_pre.
 $default_pre_script = '
 #!/bin/bash
 
-$mariabackup=`which mariabackup`
+mariabackup=`which mariabackup`
+mysqldump=`which mysqldump`
 
 MARIABACKUP=1
 MYSQLDUMP=0
@@ -57,9 +58,9 @@ fi
 if [ $MYSQLDUMP -eq 1 ]; then
     while read db
     do
-	echo -n "Dumping $db..."
-	mysqldump --triggers --routines --events $db | gzip > $BACKUPPATH/mysqldump/$db.sql.gz
-	echo "Done!"
+    echo -n "Dumping $db..."
+    $mysqldump --triggers --routines --events $db | gzip > $BACKUPPATH/mysqldump/$db.sql.gz
+    echo "Done!"
     done < <(mysql -e "SHOW DATABASES;" | sed "1d" | grep -v "information_schema\|performance_schema\|mysql")
 fi
 

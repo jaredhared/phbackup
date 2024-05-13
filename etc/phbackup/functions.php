@@ -1,5 +1,9 @@
 <?php 
 
+if (file_exists("/etc/phbackup/functions.custom.php")) {
+  include_once("/etc/phbackup/functions.custom.php");
+}
+
 function get_script_vars($db) {
     $script_vars = array();
     $sql="select * from host_vars where host=10000;";

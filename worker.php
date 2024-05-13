@@ -76,10 +76,10 @@ while(true)
         {
             while($row = $res->fetch_array())
             {
-    	        $host_id=$row['id'];
+	        $host_id=$row['id'];
 		$datestart = date("Y-m-d_H:i:s");
 
-		echo $datestart." - Starting cron script installation\n";
+		echo "$datestart - [$worker_id] Host ".$row['name']." - Starting cron script installation\n";
 
                 // Getting host vars
                 $sql="SELECT hosts.*, host_groups.path FROM `hosts`,host_groups WHERE hosts.id=".$host_id." and hosts.group_id=host_groups.id;";
@@ -92,6 +92,10 @@ while(true)
                     $host_vars[$row['var']] = $row['value'];
                 }
 
+                $ssh_opts="-ocompression=no -oLogLevel=ERROR -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port'];
+                $scp_opts="-ocompression=no -oLogLevel=ERROR -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -P ".$host_data['port'];
+
+
                 $bkpath = $backup_path."/".$host_data['path']."/".$host_data['name'];
 		if (!is_dir($bkpath)) exec("mkdir -p $bkpath");
                 file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
@@ -100,25 +104,21 @@ while(true)
 	        exec("tr -d '\r' < $bkpath/tmp.cron > $bkpath/phbackup && rm $bkpath/tmp.cron");
 
 	        $updateok=0;
-                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"mkdir -p /opt > /dev/null 2>&1\"";
+                $cmd = "ssh $ssh_opts ".$host_data['user']."@".$host_data['ip']." \"mkdir -p /opt > /dev/null\"";
                 exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
-                $cmd = "chmod 750 $bkpath/phbackup.sh && scp $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null 2>&1";
-                exec($cmd, $output, $return_code);
-                if ($return_code>0) echo "Failed: $cmd\n";
-                $updateok += $return_code;
-                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
+                $cmd = "chmod 750 $bkpath/phbackup.sh && scp $scp_opts $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null";
                 exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
-                $cmd = "scp $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null 2>&1";
+                $cmd = "ssh $ssh_opts ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
                 exec($cmd, $output, $return_code);
                 if ($return_code>0) echo "Failed: $cmd\n";
                 $updateok += $return_code;
-#                $cmd = "ssh ".$host_data['user']."@".$host_data['ip']." \"service cron reload\"";
-#                system($cmd, $return_code);
-#                if ($return_code>0) echo "Failed: $cmd\n";
-#                $updateok += $return_code;
+                $cmd = "scp $scp_opts $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null";
+                exec($cmd, $output, $return_code);
+                if ($return_code>0) echo "Failed: $cmd\n";
+                $updateok += $return_code;
 
 	        if($updateok==0)
 	        {

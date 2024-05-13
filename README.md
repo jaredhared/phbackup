@@ -73,7 +73,7 @@ feature telnet
 2. Create a host in PHbackup, with **backup_cisco_switch_via_telnet** as backup function
 
 ### Other switches/devices
-You can add an appropriate function named backup_xxxxxxx to the /etc/phbackup/functions.php. After that it will be selectable as a backup function for hosts.
+You can add an appropriate function named backup_xxxxxxx to the /etc/phbackup/functions.custom.php. After that it will be selectable as a backup function for hosts.
 
 ## Host groups
 Since v. 1.6.0, host groups are supported. They are useful to place your hosts into subdirs inside backup directory, for example, servers by default are in the root of backup directory and switches are inside Switches folder.

@@ -148,6 +148,27 @@ function upgrade_161_1_6_1($db) {
 };
 
 
+function upgrade_162_1_6_2($db) {
+    echo "Upgrading to 1.6.2... ";
+
+    $sql="select * from hosts where group_id=1;";
+    $res = $db->query($sql);
+    $ok=0;
+    while ($row = $res->fetch_array()) {
+        if ($row['group_id']==1) $sql="update host_vars set value='IyEvYmluL2Jhc2gNCg0KbWFyaWFiYWNrdXA9YHdoaWNoIG1hcmlhYmFja3VwYA0KbXlzcWxkdW1wPWB3aGljaCBteXNxbGR1bXBgDQoNCk1BUklBQkFDS1VQPTENCk1ZU1FMRFVNUD0wDQpCQUNLVVBQQVRIPSIvdmFyL2RiLWJhY2t1cCINCg0Kcm0gLXJmICRCQUNLVVBQQVRIDQpta2RpciAkQkFDS1VQUEFUSA0KDQppZiBbICRNQVJJQUJBQ0tVUCAtZXEgMSBdOyB0aGVuDQogICAgZWNobyAtbiAibWFyaWFiYWNrdXAgc3RhcnRpbmcuLi4iDQogICAgJG1hcmlhYmFja3VwIC0tYmFja3VwIC0tdGFyZ2V0LWRpcj0kQkFDS1VQUEFUSC9tYXJpYWJhY2t1cCAtLXVzZXI9cm9vdA0KICAgIGVjaG8gLW4gIm1hcmlhYmFja3VwIHByZXBhcmUgc3RhcnRpbmcuLi4iDQogICAgJG1hcmlhYmFja3VwIC0tcHJlcGFyZSAtLXRhcmdldC1kaXI9JEJBQ0tVUFBBVEgvbWFyaWFiYWNrdXANCiAgICBlY2hvICJtYXJpYWJhY2t1cCBEb25lISINCmZpDQoNCmlmIFsgJE1ZU1FMRFVNUCAtZXEgMSBdOyB0aGVuDQogICAgd2hpbGUgcmVhZCBkYg0KICAgIGRvDQogICAgZWNobyAtbiAiRHVtcGluZyAkZGIuLi4iDQogICAgJG15c3FsZHVtcCAtLXRyaWdnZXJzIC0tcm91dGluZXMgLS1ldmVudHMgJGRiIHwgZ3ppcCA+ICRCQUNLVVBQQVRIL215c3FsZHVtcC8kZGIuc3FsLmd6DQogICAgZWNobyAiRG9uZSEiDQogICAgZG9uZSA8IDwobXlzcWwgLWUgIlNIT1cgREFUQUJBU0VTOyIgfCBzZWQgIjFkIiB8IGdyZXAgLXYgImluZm9ybWF0aW9uX3NjaGVtYVx8cGVyZm9ybWFuY2Vfc2NoZW1hXHxteXNxbCIpDQpmaQ0KDQpleGl0IDA=' where var='pre_script' and host=".$row['id']; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
+    }
+
+    $ok == $res->num_rows ? $ok=1 : $ok=0;
+
+    $sql="update hosts set pre_install=1 where group_id=1;"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
+    if (!isset($script_vars['version'])) {$sql="UPDATE host_vars SET value=162 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+    if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.6.2' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+
+    if ($ok==4) { echo "Done!\n"; return true; } 
+    else { echo "Error!\n"; return false; }
+};
+
+
 
 
 
