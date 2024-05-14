@@ -56,6 +56,7 @@ if [ $MARIABACKUP -eq 1 ]; then
 fi
 
 if [ $MYSQLDUMP -eq 1 ]; then
+    mkdir $BACKUPPATH/mysqldump
     while read db
     do
     echo -n "Dumping $db..."
