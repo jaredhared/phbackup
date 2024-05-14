@@ -111,7 +111,7 @@ function upgrade_160_1_6_0($db) {
     echo "Upgrading to 1.6.0... ";
 
     $ok=0;
-    $sql="DELETE FROM host_vars WHERE var='backup_dir'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
+    $sql="DELETE FROM host_vars WHERE var='backup_function'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
     $sql="CREATE TABLE `host_groups` (`id` int(11) NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL, `path` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
     $sql="ALTER TABLE `hosts` ADD `group_id` INT NOT NULL DEFAULT '1' AFTER `description`;"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
     $sql="INSERT INTO `host_groups` (`id`, `name`, `path`) VALUES (NULL, 'Servers', '');"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error);
