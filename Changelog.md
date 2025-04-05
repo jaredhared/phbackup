@@ -1,6 +1,11 @@
 # PHBackup changelog
 
+## 1.6.3
+
+* Fixed stale backups with no active workers
+
 ## 1.6.2
+
 * Fixed a typo in default pre_script leading to mariabackup error
 * Updated pre-scripts for all hosts in group id 1 (servers)
 * Fixed SSH options for pre-script installation

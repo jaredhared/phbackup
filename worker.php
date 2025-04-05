@@ -49,6 +49,49 @@ while(true)
     {
         $db=mysqli_connect($db_host,$db_user,$db_pass, $db_name);
 
+    // Finding stale hosts
+        $db->begin_transaction();
+        $sql = "SELECT hosts.id, hosts.name, hosts.enabled, hosts.worker, host_vars.value, hosts.last_backup, hosts.backup_started, TIMESTAMPDIFF(hour, hosts.last_backup, now()) as hours 
+        FROM `hosts` left JOIN host_vars on hosts.id=host_vars.host          
+        WHERE ( host_vars.var='backup_period' AND hosts.worker>=0 AND hosts.enabled=1)
+        ORDER BY RAND() LIMIT 0,1 FOR UPDATE;";
+
+    try {
+	    $res = $db->query($sql);
+        if ($res === FALSE) {
+	    throw new Exception($db->error);
+        }
+	}
+	catch(Exception $e) {
+            echo "$datestart - [$worker_id] SQL error: ".$db->error."\n"; 
+    }
+
+        if( mysqli_num_rows($res)>0 && !$db->error )
+        {
+            while($row = $res->fetch_array())
+            {
+                if($row['hours'] > $row['value']) 
+                {
+                    $datestart = date("Y-m-d_H:i:s");
+//                    echo "$datestart - [$worker_id] Host ".$row['name']." - Host looks stale, checking ps\n";
+                    $cmd = "ps ax|grep phbackup | grep \"".$row['name']."]\" | grep -v 'ps ax' |wc -l";
+                    $output="";
+                    exec($cmd, $output, $return_code);
+                    if ($return_code>0) echo "Failed: $cmd\n";
+                    if ($output[0] == "0") 
+                    {
+                        echo "$datestart - [$worker_id] Host ".$row['name']." - Host is stale, unlocking\n";
+                        $sql="UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=".$row['id'];
+                        $db->query($sql);
+                    }
+                }
+            }
+        }
+        else 
+        {
+	    $db->rollback();
+//    	    echo "$datestart - [$worker_id] No hosts for backup, skipping turn\n";
+	}
 
 
 
