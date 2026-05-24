@@ -182,6 +182,19 @@ function upgrade_163_1_6_3($db) {
 };
 
 
+function upgrade_164_1_6_4($db) {
+    echo "Upgrading to 1.6.4... ";
+
+    $ok=0;
+
+    if (!isset($script_vars['version'])) {$sql="UPDATE host_vars SET value=164 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+    if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.6.4' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
+
+    if ($ok==2) { echo "Done!\n"; return true; } 
+    else { echo "Error!\n"; return false; }
+};
+
+
 
 
 

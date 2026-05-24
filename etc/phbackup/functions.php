@@ -77,7 +77,8 @@ function run_backup ($db, $host_data, $host_vars) {
 
 function backup_server_via_ssh ($db, $host_data, $host_vars) {
 
-        global $backup_path, $worker_id, $cmd_rsync, $rsync_opts, $nextbackup, $datestart, $host_id;
+//        global $backup_path, $worker_id, $cmd_rsync, $rsync_opts, $nextbackup, $datestart, $host_id;
+        global $backup_path, $worker_id, $cmd_rsync, $nextbackup, $datestart, $host_id;
 
         // Setting process title
         cli_set_process_title("phbackup-$worker_id [backing ".$host_data['name']."]");
@@ -88,6 +89,8 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         $datestamp = date("Y-m-d_H:i:s");
         $bkpath = $backup_path."/".$host_data['path']."/".$host_data['name'];
         $backup_period=$host_vars['backup_period'];
+
+        $rsync_opts = $host_vars['rsync_options'];
 
         // Generating include/exclude files
         file_put_contents("$bkpath/exclude.txt", base64_decode($host_vars['exclude_paths']));

@@ -24,7 +24,7 @@ catch (Error $e) {
 }
 
 
-$rsync_opts = "-vbrltz";
+$rsync_opts = "-vbrlt";
 $ticker_step=5;
 
 preg_match('/phb-worker-(\d+)/', getenv('SUPERVISOR_PROCESS_NAME'), $matches);

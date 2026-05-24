@@ -1,5 +1,9 @@
 # PHBackup changelog
 
+## 1.6.4
+
+* Fixed - Rsync options were not applied
+
 ## 1.6.3
 
 * Fixed stale backups with no active workers
