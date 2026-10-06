@@ -328,8 +328,8 @@ if (empty($_GET['action'])) {
             echo '<td class="ip'.$color.'"><a href="index.php?action=edit&host='.$id.'">'.h($row['name']).'</a></td>';
 
             if ($row['enabled']==1) $enablestr="Enabled, "; else $enablestr="Disabled, ";
-            if ($row['pre_install']==1) $prestr="<br><span class='hint'>Pre-script install pending</span>"; else $prestr="";
-            if ($row['pre_install']==2) $prestr="<br><span class='hint red'>Pre-script install failed</span>"; else $prestr="";
+            $prestrs = array(1 => "<br><span class='hint'>Pre-script install pending</span>", 2 => "<br><span class='hint red'>Pre-script install failed</span>", 3 => "<br><span class='hint'>Pre-script installing</span>");
+            $prestr = $prestrs[$row['pre_install']] ?? "";
             if ($row['worker']>=0) $workerstr=" (".(int)$row['worker'].")"; else $workerstr="";
             echo '<td class="ip'.$color.' status'.$st.' align-center">'.$enablestr.h($status[$st] ?? $st).$workerstr.$prestr.'</td>';
 

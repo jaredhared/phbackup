@@ -185,8 +185,10 @@ function host_backup_path($host_data) {
 
 
 // Common SSH options. $port_flag is -p for ssh and -P for scp
+// BatchMode - never hang on password prompt, ConnectTimeout - unreachable host fails in 30s,
+// ServerAlive* - dead connection is detected in ~2 minutes
 function ssh_options($port, $port_flag = "-p") {
-    return "-ocompression=no -oLogLevel=ERROR -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null $port_flag ".(int)$port;
+    return "-ocompression=no -oLogLevel=ERROR -oBatchMode=yes -oConnectTimeout=30 -oServerAliveInterval=15 -oServerAliveCountMax=8 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null $port_flag ".(int)$port;
 }
 
 

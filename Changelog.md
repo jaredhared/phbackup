@@ -11,6 +11,14 @@
 * Fixed backup log for hosts in groups with a subdirectory
 * Zabbix data is generated with json_encode, so it is always a valid JSON
 * Telnet password is not written to disk anymore
+* Workers do not crash when DB is unavailable, they wait and reconnect (previously a DB restart could leave workers in FATAL state)
+* Any error during a backup is logged, the host is unlocked and the worker keeps running
+* On start, a worker unlocks hosts left locked by its previous run
+* Stale hosts are detected by lock time (5 minutes without a running backup process), including hosts which were never backed up
+* Pre-backup script installation does not hold DB locks during SSH, stops on first failed step
+* SSH: BatchMode, 30s connect timeout, dead connections are detected in ~2 minutes instead of ~28 days
+* Supervisor config: stopasgroup/killasgroup, so rsync is stopped together with the worker. **Update /etc/supervisor/conf.d/phbackup.conf**
+* Fixed "Pre-script install pending" status not shown in the host list
 
 ## 1.6.4
 
