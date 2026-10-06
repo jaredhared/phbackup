@@ -79,28 +79,52 @@ zabbix_export:
                 -
                   tag: Backup
                   value: '{#HOST}'
+            -
+              uuid: f28c895252a749dbb09066b13f587a47
+              name: '{#HOST} PHBackup Last result'
+              key: 'phbackup.last_result[{#HOST}]'
+              delay: 30m
+              history: 7d
+              trends: 30d
+              value_type: FLOAT
+              tags:
+                -
+                  tag: Backup
+                  value: '{#HOST}'
               trigger_prototypes:
                 -
-                  uuid: 6c23d9692bec484f82ab5c9c35632f9e
-                  expression: 'min(/PHBackup/phbackup.status[{#HOST}],100m)>1'
-                  name: '{#HOST} PHBackup error or too old'
-                  event_name: '{#HOST} PHBackup error or too old'
+                  uuid: 3226a56d29264313bc4911e955d1627c
+                  expression: 'min(/PHBackup/phbackup.last_result[{#HOST}],100m)>1'
+                  name: '{#HOST} PHBackup last backup failed'
+                  event_name: '{#HOST} PHBackup last backup failed'
                   priority: AVERAGE
                   tags:
                     -
                       tag: Backup
                       value: '{#HOST}'
-          trigger_prototypes:
             -
-              uuid: 0eee1cc012914cff9ac2c27e437124b0
-              expression: '(last(/PHBackup/phbackup.age[{#HOST}])>last(/PHBackup/phbackup.period[{#HOST}])) and last(/PHBackup/phbackup.status[{#HOST}])<>1'
-              name: '{#HOST} PHBackup age problem'
-              event_name: '{#HOST} PHBackup age problem'
-              priority: AVERAGE
+              uuid: 7611eb2cb3e34ecea5722aa1be496913
+              name: '{#HOST} PHBackup Overdue'
+              key: 'phbackup.overdue[{#HOST}]'
+              delay: 30m
+              history: 7d
+              trends: 30d
+              value_type: FLOAT
               tags:
                 -
                   tag: Backup
                   value: '{#HOST}'
+              trigger_prototypes:
+                -
+                  uuid: a2fd0b59b4714cb087798098348a98ce
+                  expression: 'last(/PHBackup/phbackup.overdue[{#HOST}])=1'
+                  name: '{#HOST} PHBackup age problem'
+                  event_name: '{#HOST} PHBackup age problem'
+                  priority: AVERAGE
+                  tags:
+                    -
+                      tag: Backup
+                      value: '{#HOST}'
       tags:
         -
           tag: Backup

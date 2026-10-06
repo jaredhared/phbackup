@@ -19,6 +19,15 @@
 * SSH: BatchMode, 30s connect timeout, dead connections are detected in ~2 minutes instead of ~28 days
 * Supervisor config: stopasgroup/killasgroup, so rsync is stopped together with the worker. **Update /etc/supervisor/conf.d/phbackup.conf**
 * Fixed "Pre-script install pending" status not shown in the host list
+* **Zabbix:** fixed problems being hidden as soon as a new backup attempt starts. New `last_result` column keeps the result of the last finished backup, `zabbix.php` exports `backup_last_result` and `backup_overdue`. **Update zabbix/phbackup.conf and re-import the template**
+* Zabbix: hosts never backed up have age -1 instead of 0, disabled hosts are not discovered
+* "Backup now" does not start a second backup right after the first one and does not shift the schedule
+* "Backup now" does not start a parallel backup of a host which is being backed up; "Unlock" restores the last result instead of "Ok"
+* Hosts outside their time slots do not delay other hosts; workers lock hosts without table-wide locks
+* Backup time slots over midnight (22-3) are supported, invalid slots are rejected instead of silently disabling backups
+* Web interface and workers detect a pending DB upgrade (upgrade functions moved to /etc/phbackup/upgrades.php); workers wait until upgrade.php is run
+* upgrade.php stops on the first failed step
+* "Last try" shows the real time of the last attempt, password field is hidden
 
 ## 1.6.4
 

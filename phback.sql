@@ -88,6 +88,7 @@ CREATE TABLE `hosts` (
   `user` varchar(255) NOT NULL,
   `ssh_key` text NOT NULL,
   `status` int(11) NOT NULL DEFAULT -1,
+  `last_result` int(11) NOT NULL DEFAULT -1,
   `enabled` tinyint(1) NOT NULL,
   `last_backup` datetime DEFAULT '0000-00-00 00:00:00',
   `worker` int(11) NOT NULL DEFAULT -1,

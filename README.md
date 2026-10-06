@@ -46,8 +46,14 @@ It runs at a backup server and allows you to configure and manage backups of you
 ## Zabbix configuration
 
 1. If you need to monitor your PHBackup installation via Zabbix 6+, you will need to install `jq` tool at backup server.
-2. Also, you have to add a line to /etc/crontab: `*/5 * * * *	root	/bin/php /path/to/your/www/zabbix.php > /tmp/phbackup.zabbix`
+2. Also, you have to add a line to /etc/crontab: `*/5 * * * *	root	/bin/php /path/to/your/www/zabbix.php > /tmp/phbackup.zabbix.tmp && mv /tmp/phbackup.zabbix.tmp /tmp/phbackup.zabbix` (writing via temporary file, so Zabbix agent never reads a half-written file)
 3. After that, copy zabbix/phbackup.conf to /etc/zabbix/zabbix_agent2.d and import template from PHBackup.yaml to your Zabbix server
+4. When upgrading to 1.6.5 or newer, update zabbix/phbackup.conf and re-import the template with "Delete missing" option checked for triggers
+
+Zabbix triggers:
+* **PHBackup last backup failed** - the last finished backup of the host failed (for 100 minutes). Starting a new attempt does not reset it.
+* **PHBackup age problem** - the last successful backup is older than backup period (+2 hours, `$zabbix_age_slack` in opt.php). A running backup suppresses it only if it was started on time.
+* Disabled hosts are not discovered.
 
 ## Usage
 1. Add a SSH key of backup server to the target machine and allow backup server to login as root with key-based authorization

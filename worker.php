@@ -123,7 +123,7 @@ function release_stale_hosts($db) {
         if ($running == 0) {
             log_msg("Host ".$row['name']." - Host is stale, unlocking");
             // worker=? protects from unlocking a host which was locked again in the meantime
-            db_query($db, "UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=? AND worker=?", array($row['id'], $row['worker']));
+            db_query($db, "UPDATE hosts set worker=-1, status=2, last_result=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=? AND worker=?", array($row['id'], $row['worker']));
         }
     }
 }
@@ -206,67 +206,84 @@ function in_time_slots($time_slots) {
 }
 
 
-// Picks a host which needs backup, locks it and runs backup
+// Picks a host which needs backup, locks it and runs backup.
+// Candidates are filtered by time slots first, so hosts outside their slots do not delay others.
+// Host is locked by conditional UPDATE, no table-wide FOR UPDATE locks are needed.
 function backup_next_host($db) {
     global $worker_id, $host_id, $datestart, $nextbackup;
 
-    $db->begin_transaction();
     $sql="SELECT hosts.id, hosts.name, hosts.time_slots, hosts.backup_now
-        FROM `hosts`
-        LEFT JOIN host_vars on hosts.id=host_vars.host
-        WHERE host_vars.var='backup_period'
-        AND hosts.enabled=1
-        AND hosts.worker=-1
-        AND ( hosts.next_try<NOW() OR hosts.backup_now=1 )
-        ORDER BY RAND() LIMIT 0,1 FOR UPDATE";
+        FROM `hosts` 
+        LEFT JOIN host_vars on hosts.id=host_vars.host 
+        WHERE host_vars.var='backup_period' 
+        AND hosts.enabled=1 
+        AND hosts.worker=-1 
+        AND ( hosts.next_try<NOW() OR hosts.backup_now=1 )";
     $res = $db->query($sql);
-    $row = $res->fetch_array();
+
+    $candidates = array();
+    while ($row = $res->fetch_array()) {
+        // "Backup now" ignores time slots
+        if ($row['backup_now']==1 || in_time_slots($row['time_slots'])) $candidates[] = $row;
+    }
+    shuffle($candidates);
 
     $datestart = date("Y-m-d H:i:s");
     $nextbackup = date("Y-m-d H:i:00");
 
-    if (!$row) {
-        $db->rollback();
+    foreach ($candidates as $row) {
+        $locked = db_query($db, "UPDATE hosts set worker=?, backup_started=NOW(), status=1 where id=? AND worker=-1 AND enabled=1", array($worker_id, $row['id']));
+        if ($locked != 1) continue; // Another worker was faster
+
+        if ($row['backup_now']==1) log_msg("Host ".$row['name']." - found Backup Now flag");
+        log_msg("Host ".$row['name']." - starting backup");
+
+        // From now on the host is locked by us. If something throws, main loop will release it.
+        $host_id = (int)$row['id'];
+        list($host_data, $host_vars) = load_host($db, $host_id);
+        run_backup($db, $host_data, $host_vars);
+        $host_id = 0;
         return;
     }
-
-    $timeok = in_time_slots($row['time_slots']);
-
-    // Handling "Backup now"
-    if ($row['backup_now']==1) { $timeok=true; log_msg("Host ".$row['name']." - found Backup Now flag"); }
-
-    if (!$timeok) {
-        $db->rollback();
-        return;
-    }
-
-    db_query($db, "UPDATE hosts set worker=?, backup_started=NOW(), status=1 where id=? AND worker=-1", array($worker_id, $row['id']));
-    $db->commit();
-    log_msg("Host ".$row['name']." - starting backup");
-
-    // From now on the host is locked by us. If something throws, main loop will release it.
-    $host_id = (int)$row['id'];
-    list($host_data, $host_vars) = load_host($db, $host_id);
-    run_backup($db, $host_data, $host_vars);
-    $host_id = 0;
 }
 
 
 
-// Releasing hosts left locked by previous run of this worker
-$db = db_connect_retry();
-release_own_hosts($db);
-$db->close();
+// Workers do nothing until DB is upgraded, since DB structure may be outdated
+function db_is_upgraded($db) {
+    static $reported = false;
+    if (is_upgraded($db) === true) {
+        if ($reported) log_msg("DB is upgraded, resuming work");
+        $reported = false;
+        return true;
+    }
+    if (!$reported) log_msg("DB upgrade is needed, please run upgrade.php. Waiting...");
+    $reported = true;
+    return false;
+}
 
 
 $host_id = 0;
 $failed_host_id = 0;
+$own_hosts_released = false;
 
 // Entering main cycle
 while(true)
 {
     try {
         $db = db_connect_retry();
+
+        if (!db_is_upgraded($db)) {
+            $db->close();
+            sleep($db_retry_step);
+            continue;
+        }
+
+        // Releasing hosts left locked by previous run of this worker
+        if (!$own_hosts_released) {
+            release_own_hosts($db);
+            $own_hosts_released = true;
+        }
 
         // Host which was being backed up when an error happened
         if ($failed_host_id > 0) {

@@ -1,5 +1,7 @@
 <?php
 
+require_once("/etc/phbackup/upgrades.php");
+
 if (file_exists("/etc/phbackup/functions.custom.php")) {
   include_once("/etc/phbackup/functions.custom.php");
 }
@@ -68,7 +70,8 @@ function is_upgraded($db) {
 // Safety helpers: DB queries, HTML output, input validation
 // ---------------------------------------------------------------------------
 
-// Runs a prepared statement. Returns mysqli_result for SELECTs, true otherwise.
+// Runs a prepared statement. Returns mysqli_result for SELECTs, number of affected rows otherwise.
+// Note: $db->affected_rows is not reliable after prepared statements, use the returned value.
 function db_query($db, $sql, $params = array()) {
     $stmt = $db->prepare($sql);
     if (!empty($params)) {
@@ -77,7 +80,7 @@ function db_query($db, $sql, $params = array()) {
     }
     $stmt->execute();
     $res = $stmt->get_result();
-    return $res === false ? true : $res;
+    return $res === false ? $stmt->affected_rows : $res;
 }
 
 
@@ -193,7 +196,7 @@ function ssh_options($port, $port_flag = "-p") {
 
 
 function mark_backup_failed($db, $host_id) {
-    db_query($db, "UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=?", array($host_id));
+    db_query($db, "UPDATE hosts set worker=-1, status=2, last_result=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=?", array($host_id));
 }
 
 
@@ -286,10 +289,12 @@ function finish_backup_ok ($db, $host_data, $host_vars) {
     global $nextbackup, $datestart, $host_id;
 
     $backup_period = max(1, (int)$host_vars['backup_period']);
+    // "Backup now" does not shift the schedule: if the next regular backup is already planned, it is kept.
+    // Previously next_try was set to NOW(), and the host was backed up again right away.
     if ($host_data['backup_now']==1)
-        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, next_try=NOW(), backup_now=0 where id=?", array($datestart, $host_id));
+        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, last_result=0, next_try=IF(next_try > NOW(), next_try, DATE_ADD(?, INTERVAL ? HOUR)), backup_now=0 where id=?", array($datestart, $nextbackup, $backup_period, $host_id));
     else
-        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, next_try=DATE_ADD(?, INTERVAL ? HOUR), backup_now=0 where id=?", array($datestart, $nextbackup, $backup_period, $host_id));
+        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, last_result=0, next_try=DATE_ADD(?, INTERVAL ? HOUR), backup_now=0 where id=?", array($datestart, $nextbackup, $backup_period, $host_id));
 }
 
 

@@ -83,10 +83,10 @@ function DrawHost($host_data, $host_vars) {
     echo "<tr><td class='ip1'>Host group<br><span class=hint>Groups can be backed up into separate subdirectories</span></td><td class='ip1'>$group_select</td></tr>";
     echo "<tr><td class='ip1'>Host port<br><span class=hint>Port at host to connect to (22 - SSH, 23 - Telnet)</span></td><td class='ip1'><input type='text' size='100' name='port' value='".h($port)."'></td></tr>";
     echo "<tr><td class='ip1'>Host user<br><span class=hint>Username for connection</span></td><td class='ip1'><input type='text' size='100' name='user' value='".h($user)."'></td></tr>";
-    echo "<tr><td class='ip1'>Host key/password<br><span class=hint>Password or SSH key for backup user</span></td><td class='ip1'><input type='text' size='100' name='ssh_key' value='".h($ssh_key)."'></td></tr>";
+    echo "<tr><td class='ip1'>Host key/password<br><span class=hint>Password for backup user (used by switch backup functions)</span></td><td class='ip1'><input type='password' size='100' name='ssh_key' autocomplete='new-password' value='".h($ssh_key)."'></td></tr>";
     echo "<tr><td class='ip1'>Backup function<br><span class=hint>Which backup function to use for this device</span></td><td class='ip1'>$func_select</td></tr>";
     echo "<tr><td class='ip1'>Backup period<br><span class=hint>How often to do backups, hours</span></td><td class='ip1'><input type='text' size='100' name='backup_period' value='".h($bperiod)."'></td></tr>";
-    echo "<tr><td class='ip1'>Backup time slots<br><span class=hint>Hours of day, during which backups are allowed, in comma separated, dash-delimited periods, like 0-2,4-7,8-11</span></td><td class='ip1'><input type='text' size='100' name='timestr' value='".h($time_slots)."'></td></tr>";
+    echo "<tr><td class='ip1'>Backup time slots<br><span class=hint>Hours of day, during which backups are allowed, in comma separated, dash-delimited periods, like 0-2,4-7,8-11. Periods over midnight like 22-3 are allowed</span></td><td class='ip1'><input type='text' size='100' name='timestr' value='".h($time_slots)."'></td></tr>";
     echo "<tr><td class='ip1'>Backup keep period<br><span class=hint>For which time to store backups, days. The newest backups are always kept, even if they are older</span></td><td class='ip1'><input type='text' size='100' name='backup_keep_period' value='".h($backup_keep_period)."'></td></tr>";
     echo "<tr><td class='ip1'>Rsync options<br><span class=hint>Default: ".h(DEFAULT_RSYNC_OPTIONS).". Options with values should be written as --option=value</span></td><td class='ip1'><input type='text' size='100' name='rsync_options' value='".h($rsync_options)."'></td></tr>";
     echo "<tr><td class='ip1'>Pre-backup script<br><span class='hint'>A script which prepares data on the target server - dumps databases etc.</span><br><br><p style=\"color:#ff0000;\"><b>WARNING: this script will be run as root, <br>so it potentially can break your system!<br><br>Test it first and run very carefully!</b></p></td><td class='ip1'><textarea name='pre_script' cols=70 rows=10>".h($pre_script)."</textarea></td></tr>";
@@ -108,6 +108,8 @@ function normalize_time_periods($timestr) {
 	    $start = min(24, $start);
 	    $end = min(24, $end);
 	    if ($end > $start) $updated_times[] = "$start-$end";
+	    // Period over midnight, like 22-3
+	    elseif ($end < $start) { $updated_times[] = "$start-24"; if ($end > 0) $updated_times[] = "0-$end"; }
 	}
 	return implode(",", $updated_times);
 }
@@ -211,9 +213,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 		( isset($_POST['pre_install']) && $_POST['pre_install']=="on" ) ? $pre_install="1" : $pre_install="0";
 
 		$errors = validate_host_form($db, $_POST);
+		$updated_times=normalize_time_periods($_POST['timestr'] ?? '');
+		if ($updated_times == "") $errors[] = "Backup time slots are invalid, host would never be backed up";
 		if (!empty($errors)) { print_errors($errors); break; }
-
-		$updated_times=normalize_time_periods($_POST['timestr']);
 
 		$res = db_query($db, "SELECT id FROM hosts WHERE name=?", array($_POST['name']));
 	        if ($res->num_rows == 0) {
@@ -240,9 +242,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 		$errors = validate_host_form($db, $_POST);
 		$res = db_query($db, "SELECT id FROM hosts WHERE name=? AND id<>?", array($_POST['name'] ?? '', $post_id));
 		if ($res->num_rows > 0) $errors[] = "Host with this name already exists";
+		$updated_times=normalize_time_periods($_POST['timestr'] ?? '');
+		if ($updated_times == "") $errors[] = "Backup time slots are invalid, host would never be backed up";
 		if (!empty($errors)) { print_errors($errors); break; }
-
-		$updated_times=normalize_time_periods($_POST['timestr']);
 
 		// If checkbox is on, scheduling script install
 		(isset($_POST['pre_install']) && $_POST['pre_install']=="on") ? $pre_install="1" : $pre_install="0";
@@ -262,13 +264,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
                 break;
 
         case "unlock":
-		db_query($db, "UPDATE hosts SET worker=-1, status=0 WHERE id=?", array($post_id));
+		// Status is set to the result of the last finished backup, not to "Ok"
+		db_query($db, "UPDATE hosts SET worker=-1, status=last_result WHERE id=?", array($post_id));
                 echo "<center><h3>Host <span>$post_id</span> was successfully unlocked";
                 break;
 
         case "backup":
-		db_query($db, "UPDATE hosts SET worker=-1, status=0, backup_now=1 WHERE id=?", array($post_id));
-                echo "<center><h3>Host <span>$post_id</span> was successfully unlocked, backup will start soon";
+		// A running backup is not interrupted, otherwise a second backup of the same host would start in parallel
+		if (db_query($db, "UPDATE hosts SET backup_now=1 WHERE id=? AND worker=-1", array($post_id)) == 1) echo "<center><h3>Backup of host <span>$post_id</span> will start soon";
+		else echo "<center><h3 class='red'>Host <span>$post_id</span> is being backed up right now. If it is stuck, unlock it first.";
                 break;
 
     }
@@ -331,10 +335,11 @@ if (empty($_GET['action'])) {
             $prestrs = array(1 => "<br><span class='hint'>Pre-script install pending</span>", 2 => "<br><span class='hint red'>Pre-script install failed</span>", 3 => "<br><span class='hint'>Pre-script installing</span>");
             $prestr = $prestrs[$row['pre_install']] ?? "";
             if ($row['worker']>=0) $workerstr=" (".(int)$row['worker'].")"; else $workerstr="";
+            if ($st==1 && (int)$row['last_result']==2) $workerstr.="<br><span class='hint red'>Last backup failed</span>";
             echo '<td class="ip'.$color.' status'.$st.' align-center">'.$enablestr.h($status[$st] ?? $st).$workerstr.$prestr.'</td>';
 
             echo '<td class="ip'.$color.' status'.$st.' align-center">'.h($row['last_backup']);
-            if($st>1) echo '<br><span class=hint>Last try: '.h($row['last_backup']).'</span>';
+            if($st>1) echo '<br><span class=hint>Last try: '.h($row['backup_started']).'</span>';
             echo '<br><span class=hint>Next try: '.h($row['next_try']).'</span>';
 //	    echo '<br><span class=hint>Time slots: '.$row['time_slots'].'</span>';
             echo '</td>';
@@ -419,7 +424,8 @@ else {
                 <input type='hidden' name='action' value='unlock'>";
 		if($host_data['worker']>-1)
                     echo "<center><h4>Host <span class=red>$hname</span><br>
-	            is locked by backup worker ".(int)$host_data['worker']." since ".h($host_data['backup_started'])."
+	            is locked by backup worker ".(int)$host_data['worker']." since ".h($host_data['backup_started'])."<br><br>
+    	    	    Unlocking does not stop the running backup process. Stuck hosts are unlocked automatically after 5 minutes.<br>
     	    	    Do you want to unlock it?<br><br>
     	    	    <input type='submit' value='Yes, I am sure'>
     	    	    <a href='index.php?$grouplink'>No, go back</a>
@@ -437,18 +443,16 @@ else {
                 echo "<form method='post' action='index.php?$grouplink'><input type='hidden' name='confirm' value='yes'>$csrf_input
                 <input type='hidden' name='id' value='$hid'>
                 <input type='hidden' name='action' value='backup'>";
-		if($host_data['worker']>0)
+		if($host_data['worker']>=0)
                     echo "<center><h4>Host <span class=red>$hname</span><br>
-	            is locked by backup worker ".(int)$host_data['worker']." since ".h($host_data['backup_started'])."
-    	    	    Do you want to unlock it and start a new backup?<br><br>
-    	    	    <input type='submit' value='Yes, I am sure'>
-    	    	    <a href='index.php?$grouplink'>No, go back</a>
+	            is being backed up by worker ".(int)$host_data['worker']." since ".h($host_data['backup_started']).".<br><br>
+    	    	    <a href='index.php?$grouplink'>Go back to the host list</a>
     		    </center>
     	            </form>";
     	        else
                     echo "<center><h4>Host <span class=red>$hname</span><br>
 	            is not locked by any backup worker.<br><br>
-    	    	    Do you want to unlock it and start a new backup?<br><br>
+    	    	    Do you want to start a new backup now?<br><br>
     	    	    <input type='submit' value='Yes, I am sure'>
     	    	    <a href='index.php?$grouplink'>No, go back</a>
     		    </center>
