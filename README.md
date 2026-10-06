@@ -84,6 +84,8 @@ You can add an appropriate function named backup_xxxxxxx to the /etc/phbackup/fu
 ## Host groups
 Since v. 1.6.0, host groups are supported. They are useful to place your hosts into subdirs inside backup directory, for example, servers by default are in the root of backup directory and switches are inside Switches folder.
 
+Groups are managed on the **Groups** page of web interface. When group path is changed, new backups of its hosts are made in the new directory, existing backups are left in the old one.
+
 ## Pre-backup scripts
 * PHbackup supports so-called pre-backup scripts, which allows to prepare data on the target host for backup: dump databases etc.
 * Pre-backup script is a regular shell script, which will be run as scheduled by Cron daemon.

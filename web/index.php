@@ -77,24 +77,24 @@ function DrawHost($host_data, $host_vars) {
     if (isset($host_vars['exclude_paths'])) $exclude_paths=base64_decode($host_vars['exclude_paths']); else $exclude_paths=$default_exclude_paths;
     if (isset($host_vars['pre_script'])) $pre_script=base64_decode($host_vars['pre_script']); else $pre_script=$default_pre_script;
     if (isset($host_vars['pre_schedule'])) $pre_schedule=base64_decode($host_vars['pre_schedule']); else $pre_schedule=$default_pre_schedule;
-    echo "<tr><td class='ip1'>Host name<br><span class=hint>Latin letters, digits, dots, dashes and underscores. Used as backup directory name</span></td><td class='ip1'><input type='text' size='100' name='name' value='".h($name)."'></td></tr>";
-    echo "<tr><td class='ip1'>Host description</td><td class='ip1'><input type='text' size='100' name='description' value='".h($description)."'></td></tr>";
-    echo "<tr><td class='ip1'>Host IP</td><td class='ip1'><input type='text' size='100' name='ip' value='".h($ip)."'></td></tr>";
-    echo "<tr><td class='ip1'>Host group<br><span class=hint>Groups can be backed up into separate subdirectories</span></td><td class='ip1'>$group_select</td></tr>";
-    echo "<tr><td class='ip1'>Host port<br><span class=hint>Port at host to connect to (22 - SSH, 23 - Telnet)</span></td><td class='ip1'><input type='text' size='100' name='port' value='".h($port)."'></td></tr>";
-    echo "<tr><td class='ip1'>Host user<br><span class=hint>Username for connection</span></td><td class='ip1'><input type='text' size='100' name='user' value='".h($user)."'></td></tr>";
-    echo "<tr><td class='ip1'>Host key/password<br><span class=hint>Password for backup user (used by switch backup functions)</span></td><td class='ip1'><input type='password' size='100' name='ssh_key' autocomplete='new-password' value='".h($ssh_key)."'></td></tr>";
-    echo "<tr><td class='ip1'>Backup function<br><span class=hint>Which backup function to use for this device</span></td><td class='ip1'>$func_select</td></tr>";
-    echo "<tr><td class='ip1'>Backup period<br><span class=hint>How often to do backups, hours</span></td><td class='ip1'><input type='text' size='100' name='backup_period' value='".h($bperiod)."'></td></tr>";
-    echo "<tr><td class='ip1'>Backup time slots<br><span class=hint>Hours of day, during which backups are allowed, in comma separated, dash-delimited periods, like 0-2,4-7,8-11. Periods over midnight like 22-3 are allowed</span></td><td class='ip1'><input type='text' size='100' name='timestr' value='".h($time_slots)."'></td></tr>";
-    echo "<tr><td class='ip1'>Backup keep period<br><span class=hint>For which time to store backups, days. The newest backups are always kept, even if they are older</span></td><td class='ip1'><input type='text' size='100' name='backup_keep_period' value='".h($backup_keep_period)."'></td></tr>";
-    echo "<tr><td class='ip1'>Rsync options<br><span class=hint>Default: ".h(DEFAULT_RSYNC_OPTIONS).". Options with values should be written as --option=value</span></td><td class='ip1'><input type='text' size='100' name='rsync_options' value='".h($rsync_options)."'></td></tr>";
-    echo "<tr><td class='ip1'>Pre-backup script<br><span class='hint'>A script which prepares data on the target server - dumps databases etc.</span><br><br><p style=\"color:#ff0000;\"><b>WARNING: this script will be run as root, <br>so it potentially can break your system!<br><br>Test it first and run very carefully!</b></p></td><td class='ip1'><textarea name='pre_script' cols=70 rows=10>".h($pre_script)."</textarea></td></tr>";
-    echo "<tr><td class='ip1'>Pre-backup script schedule<br><span class='hint'>Crontab entity for pre-backup script. <br>Script name is /opt/phbackup.sh, cron file is being placed inside /etc/cron.d</span></td><td class='ip1'><input type='text' size='100' name='pre_schedule' value='".h($pre_schedule)."'></td></tr>";
-    echo "<tr><td class='ip1'>Install pre-backup script<br><span class=hint>Install new script or update existing script and cron settings</span></td><td class='ip1'><input type='checkbox' name='pre_install' unchecked></td></tr>";
-    echo "<tr><td class='ip1'>Paths to include in backup<br><span class='hint'>One path - one line</span></td><td class='ip1'><textarea name='include_paths' cols=70 rows=10>".h($include_paths)."</textarea></td></tr>";
-    echo "<tr><td class='ip1'>Paths to exclude from backup<br><span class='hint'>One path - one line</span></td><td class='ip1'><textarea name='exclude_paths' cols=70 rows=10>".h($exclude_paths)."</textarea></td></tr>";
-    echo "<tr><td class='ip1'>Enable backups<br><span class=hint>To do backups or no</span></td><td class='ip1'><input type='checkbox' name='enabled' $enabled></td></tr>";
+    echo "<tr><td>Host name<span class=hint>Latin letters, digits, dots, dashes and underscores. Used as backup directory name</span></td><td><input type='text' size='100' name='name' value='".h($name)."'></td></tr>";
+    echo "<tr><td>Host description</td><td><input type='text' size='100' name='description' value='".h($description)."'></td></tr>";
+    echo "<tr><td>Host IP</td><td><input type='text' size='100' name='ip' value='".h($ip)."'></td></tr>";
+    echo "<tr><td>Host group<span class=hint>Groups can be backed up into separate subdirectories</span></td><td>$group_select <a href='index.php?action=groups' class='small'>Edit groups</a></td></tr>";
+    echo "<tr><td>Host port<span class=hint>Port at host to connect to (22 - SSH, 23 - Telnet)</span></td><td><input type='text' size='100' name='port' value='".h($port)."'></td></tr>";
+    echo "<tr><td>Host user<span class=hint>Username for connection</span></td><td><input type='text' size='100' name='user' value='".h($user)."'></td></tr>";
+    echo "<tr><td>Host key/password<span class=hint>Password for backup user (used by switch backup functions)</span></td><td><input type='password' size='100' name='ssh_key' autocomplete='new-password' value='".h($ssh_key)."'></td></tr>";
+    echo "<tr><td>Backup function<span class=hint>Which backup function to use for this device</span></td><td>$func_select</td></tr>";
+    echo "<tr><td>Backup period<span class=hint>How often to do backups, hours</span></td><td><input type='text' size='100' name='backup_period' value='".h($bperiod)."'></td></tr>";
+    echo "<tr><td>Backup time slots<span class=hint>Hours of day, during which backups are allowed, in comma separated, dash-delimited periods, like 0-2,4-7,8-11. Periods over midnight like 22-3 are allowed</span></td><td><input type='text' size='100' name='timestr' value='".h($time_slots)."'></td></tr>";
+    echo "<tr><td>Backup keep period<span class=hint>For which time to store backups, days. The newest backups are always kept, even if they are older</span></td><td><input type='text' size='100' name='backup_keep_period' value='".h($backup_keep_period)."'></td></tr>";
+    echo "<tr><td>Rsync options<span class=hint>Default: ".h(DEFAULT_RSYNC_OPTIONS).". Options with values should be written as --option=value</span></td><td><input type='text' size='100' name='rsync_options' value='".h($rsync_options)."'></td></tr>";
+    echo "<tr><td>Pre-backup script<span class='hint'>A script which prepares data on the target server - dumps databases etc.</span><span class='warn'>Runs as root on the target host and can break the system. Test it first!</span></td><td><textarea name='pre_script' cols=70 rows=10>".h($pre_script)."</textarea></td></tr>";
+    echo "<tr><td>Pre-backup script schedule<span class='hint'>Crontab entity for pre-backup script. Script name is /opt/phbackup.sh, cron file is being placed inside /etc/cron.d</span></td><td><input type='text' size='100' name='pre_schedule' value='".h($pre_schedule)."'></td></tr>";
+    echo "<tr><td>Install pre-backup script<span class=hint>Install new script or update existing script and cron settings</span></td><td><input type='checkbox' name='pre_install' unchecked></td></tr>";
+    echo "<tr><td>Paths to include in backup<span class='hint'>One path - one line</span></td><td><textarea name='include_paths' cols=70 rows=6>".h($include_paths)."</textarea></td></tr>";
+    echo "<tr><td>Paths to exclude from backup<span class='hint'>One path - one line</span></td><td><textarea name='exclude_paths' cols=70 rows=6>".h($exclude_paths)."</textarea></td></tr>";
+    echo "<tr><td>Enable backups<span class=hint>To do backups or no</span></td><td><input type='checkbox' name='enabled' $enabled></td></tr>";
 }
 
 
@@ -116,9 +116,55 @@ function normalize_time_periods($timestr) {
 
 
 function print_errors($errors) {
-	echo "<center><h3 class='red'>Changes were not saved:</h3>";
-	foreach ($errors as $error) echo h($error)."<br>";
-	echo "<br><a href='javascript:history.back()'>Go back and fix</a></center>";
+	$list = "";
+	foreach ($errors as $error) $list .= "<li>".h($error)."</li>";
+	notice("<b>Changes were not saved:</b><ul>$list</ul><a href='javascript:history.back()'>&larr; Go back and fix</a>", "err");
+}
+
+
+// Validates host group form. Returns array of error messages
+function validate_group_form($db, $post, $id = 0) {
+	$errors = array();
+	$name = trim($post['group_name'] ?? '');
+	$path = trim($post['group_path'] ?? '', " /");
+	if ($name === '') $errors[] = "Group name must not be empty";
+	elseif (mb_strlen($name) > 255) $errors[] = "Group name is too long";
+	elseif (db_query($db, "SELECT id FROM host_groups WHERE name=? AND id<>?", array($name, $id))->num_rows > 0) $errors[] = "Group with this name already exists";
+	if (!valid_group_path($path) || strlen($path) > 255) $errors[] = "Group path may contain only latin letters, digits, dots, dashes and underscores, subdirectories are separated by /";
+	return $errors;
+}
+
+
+// Group directory inside backup path, for display
+function group_dir($path) {
+	global $backup_path;
+	return rtrim($backup_path, '/').($path !== '' ? "/$path" : "");
+}
+
+
+// Message box. $html must be already escaped
+function notice($html, $kind = "ok") {
+	echo "<div class='notice $kind'>$html</div>";
+}
+
+
+// Small monochrome icons for host actions
+function icon($name) {
+	$paths = array(
+	    'backup' => '<polygon points="7 4 19 12 7 20 7 4"/>',
+	    'edit'   => '<path d="M16 3.5l4.5 4.5L8 20.5H3.5V16z"/>',
+	    'unlock' => '<rect x="4.5" y="11" width="15" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/>',
+	    'log'    => '<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/>',
+	    'delete' => '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+	);
+	return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.$paths[$name].'</svg>';
+}
+
+
+// Date without seconds, "never" for empty dates
+function short_date($date) {
+	if (empty($date) || strpos($date, "0000-00-00") === 0) return "never";
+	return h(substr($date, 0, 16));
 }
 
 
@@ -145,22 +191,26 @@ function save_host_vars($db, $host_id, $post) {
 
 
 
+<!DOCTYPE html>
 <html>
 <head>
 <title>PHBackup <?php echo h($script_ver_text); ?></title>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<h1>PHBackup <?php echo h($script_ver_text); ?></h1>
-<form method="GET" action="index.php">
-<a href = <?php if ($cur_group) echo "'index.php?group=$cur_group'"; else echo "'index.php'"; ?> class="no-underline">🏠 Home page</a>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<a href = <?php if ($cur_group) echo "'index.php?action=add&group=$cur_group'"; else echo "'index.php?action=add'"; ?> class="no-underline">➕ Add host</a>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="zabbix.php" class="no-underline">&#128203; Zabbix stats</a>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<label for="group">Host group:</label>
+<header class="topbar">
+<?php $gq = $cur_group ? "group=$cur_group" : ""; ?>
+<a class="brand" href="index.php<?php echo $gq ? "?$gq" : ""; ?>">PHBackup <span class="ver"><?php echo h($script_ver_text); ?></span></a>
+<nav>
+<a href="index.php<?php echo $gq ? "?$gq" : ""; ?>">Hosts</a>
+<a href="index.php?action=add<?php echo $gq ? "&$gq" : ""; ?>">+ Add host</a>
+<a href="index.php?action=groups">Groups</a>
+<a href="zabbix.php">Zabbix JSON</a>
+</nav>
+<form method="GET" action="index.php" class="group-filter">
+<label>Group
 <select name="group" onchange="this.form.submit()">
 <option value=10000>All</option>
 <?php
@@ -174,8 +224,10 @@ function save_host_vars($db, $host_id, $post) {
 
 ?>
 </select>
+</label>
 </form>
-<hr>
+</header>
+<main>
 
 
 
@@ -191,7 +243,8 @@ $upgrade_path = $script_ver_text;
 if (is_array($upgrade_versions)) {
     foreach ($upgrade_versions as $short => $version ) { if ($short > $script_ver) $upgrade_path .= " => $version"; }
 
-    echo "<center><b>An upgrade is needed: ".h($upgrade_path)."<br><br> Please upgrade your PHBackup installation before use!</b></center>";
+    notice("<b>An upgrade is needed: ".h($upgrade_path)."</b><br>Please run upgrade.php before using PHBackup.", "warn");
+    echo "</main></body></html>";
     die();
 };
 
@@ -202,7 +255,7 @@ if (is_array($upgrade_versions)) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST['confirm']=="yes")
 {
     if (!is_string($_POST['csrf'] ?? null) || !hash_equals($_SESSION['csrf'], $_POST['csrf'])) {
-        echo "<center><h3 class='red'>Security token is invalid or expired. Please reload the page and try again.</h3></center>";
+        notice("Security token is invalid or expired. Please reload the page and try again.", "err");
         $_POST['action'] = "";
     }
     $post_id = (int)($_POST['id'] ?? 0);
@@ -225,9 +278,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 	                $new_host_id = $db->insert_id;
 
 			save_host_vars($db, $new_host_id, $_POST);
-	                echo "<center><h3>Host <span>".h($_POST['name'])." (".h($_POST['ip']).", id $new_host_id)</span> was successfully added";
+	                notice("Host <b>".h($_POST['name'])."</b> (".h($_POST['ip']).", id $new_host_id) was added");
 		}
-		else echo "<center><h3>Host <span>".h($_POST['name'])."</span> is already in database!";
+		else notice("Host <b>".h($_POST['name'])."</b> is already in database!", "err");
 		break;
 
 
@@ -254,26 +307,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 
 		save_host_vars($db, $post_id, $_POST);
 
-                echo "<center><h3>Host <span>".h($_POST['name'])." (".h($_POST['ip']).", id $post_id)</span> was successfully updated";
+                notice("Host <b>".h($_POST['name'])."</b> (".h($_POST['ip']).", id $post_id) was updated");
 		break;
 
         case "delete":
 		db_query($db, "delete from hosts where id=?", array($post_id));
 		db_query($db, "delete from host_vars where host=?", array($post_id));
-                echo "<center><h3>Host <span>$post_id</span> was successfully removed";
+                notice("Host id $post_id was removed");
                 break;
 
         case "unlock":
 		// Status is set to the result of the last finished backup, not to "Ok"
 		db_query($db, "UPDATE hosts SET worker=-1, status=last_result WHERE id=?", array($post_id));
-                echo "<center><h3>Host <span>$post_id</span> was successfully unlocked";
+                notice("Host id $post_id was unlocked");
                 break;
 
         case "backup":
 		// A running backup is not interrupted, otherwise a second backup of the same host would start in parallel
-		if (db_query($db, "UPDATE hosts SET backup_now=1 WHERE id=? AND worker=-1", array($post_id)) == 1) echo "<center><h3>Backup of host <span>$post_id</span> will start soon";
-		else echo "<center><h3 class='red'>Host <span>$post_id</span> is being backed up right now. If it is stuck, unlock it first.";
+		if (db_query($db, "UPDATE hosts SET backup_now=1 WHERE id=? AND worker=-1", array($post_id)) == 1) notice("Backup of host id $post_id will start soon");
+		else notice("Host id $post_id is being backed up right now. If it is stuck, unlock it first.", "err");
                 break;
+
+	// Host groups
+        case "group_add":
+		$errors = validate_group_form($db, $_POST);
+		if (!empty($errors)) { print_errors($errors); break; }
+		$name = trim($_POST['group_name']);
+		db_query($db, "INSERT INTO host_groups (name, path) VALUES (?,?)", array($name, trim($_POST['group_path'] ?? '', " /")));
+		notice("Group <b>".h($name)."</b> was added");
+		break;
+
+        case "group_edit":
+		$gres = db_query($db, "SELECT * FROM host_groups WHERE id=?", array($post_id));
+		$old = $gres->fetch_array();
+		if (!$old) { notice("Group not found", "err"); break; }
+		$errors = validate_group_form($db, $_POST, $post_id);
+		if (!empty($errors)) { print_errors($errors); break; }
+		$name = trim($_POST['group_name']);
+		$path = trim($_POST['group_path'] ?? '', " /");
+		db_query($db, "UPDATE host_groups SET name=?, path=? WHERE id=?", array($name, $path, $post_id));
+		notice("Group <b>".h($name)."</b> was updated");
+		break;
+
+        case "group_delete":
+		$hosts_num = db_query($db, "SELECT id FROM hosts WHERE group_id=?", array($post_id))->num_rows;
+		$groups_num = $db->query("SELECT id FROM host_groups")->num_rows;
+		if ($hosts_num > 0) notice("Group has $hosts_num host(s), move them to another group first", "err");
+		elseif ($groups_num <= 1) notice("The last group can not be deleted", "err");
+		elseif (db_query($db, "DELETE FROM host_groups WHERE id=?", array($post_id)) == 1) notice("Group id $post_id was removed");
+		else notice("Group not found", "err");
+		break;
 
     }
 }
@@ -311,57 +394,64 @@ if (empty($_GET['action'])) {
         }
     }
 
-    echo "<h2>Hosts list (".h($groupname).")</h2>";
+    echo "<h2>Hosts <span class='muted'>".h($groupname)."</span></h2>";
 
+    if ($res->num_rows == 0) notice("No hosts yet. <a href='index.php?action=add".($cur_group ? "&group=$cur_group" : "")."'>Add the first one</a>", "warn");
     if ($res->num_rows > 0) {
-        echo "<table border='0' cellspacing='5' cellpadding='5' width='100%'><tr>
-    	    <th class='ip2'>Host <a href='?group=$group&order-by=name&order=$sort_order1'>&#8645;</a></th>
-    	    <th class='ip2'>Status <a href='?group=$group&order-by=status&order=$sort_order1'>&#8645;</a></th>
-    	    <th class='ip2'>Last backup (+time slots) <a href='?group=$group&order-by=last_backup&order=$sort_order1'>&#8645;</a></th>
-    	    <th class='ip2'>Description <a href='?group=$group&order-by=description&order=$sort_order1'>&#8645;</a></th>
-    	    <th class='ip2'>Actions</th></tr>";
+        // Sortable column header
+        $sort_th = function($col, $title) use ($group, $order_by, $sort_order, $sort_order1) {
+            $arrow = ($order_by == $col) ? ($sort_order == "asc" ? "&#8593;" : "&#8595;") : "<span class='muted'>&#8645;</span>";
+            return "<th><a href='?group=$group&order-by=$col&order=$sort_order1'>$title $arrow</a></th>";
+        };
+        echo "<div class='table-wrap'><table class='hosts'><thead><tr>"
+            .$sort_th("name", "Host")
+            .$sort_th("status", "Status")
+            .$sort_th("last_backup", "Last backup")
+            .$sort_th("description", "Description")
+            ."<th class='actions'></th></tr></thead><tbody>";
         $i=0;
-        $color=1;
         $status = array (-1 => "Unknown", 0 => "Ok", 1 => "Backing up", 2 => "Error", 3 => "Backup too old");
 	$status_arr = array();
+	$pre_states = array(1 => "<div class='sub'>Pre-script install pending</div>", 2 => "<div class='sub red'>Pre-script install failed</div>", 3 => "<div class='sub'>Pre-script installing</div>");
 
         while ($row = $res->fetch_array()) {
             $id = (int)$row['id'];
             $st = (int)$row['status'];
-            echo '<tr>';
-            echo '<td class="ip'.$color.'"><a href="index.php?action=edit&host='.$id.'">'.h($row['name']).'</a></td>';
+            $disabled = $row['enabled'] != 1;
+            echo $disabled ? "<tr class='disabled'>" : "<tr>";
+            echo '<td><a class="host" href="index.php?action=edit&host='.$id.'">'.h($row['name']).'</a><div class="sub">'.h($row['ip']).'</div></td>';
 
-            if ($row['enabled']==1) $enablestr="Enabled, "; else $enablestr="Disabled, ";
-            $prestrs = array(1 => "<br><span class='hint'>Pre-script install pending</span>", 2 => "<br><span class='hint red'>Pre-script install failed</span>", 3 => "<br><span class='hint'>Pre-script installing</span>");
-            $prestr = $prestrs[$row['pre_install']] ?? "";
-            if ($row['worker']>=0) $workerstr=" (".(int)$row['worker'].")"; else $workerstr="";
-            if ($st==1 && (int)$row['last_result']==2) $workerstr.="<br><span class='hint red'>Last backup failed</span>";
-            echo '<td class="ip'.$color.' status'.$st.' align-center">'.$enablestr.h($status[$st] ?? $st).$workerstr.$prestr.'</td>';
+            $badge = h($status[$st] ?? $st);
+            if ($row['worker']>=0) $badge .= " &middot; w".(int)$row['worker'];
+            echo "<td><span class='badge s$st'>$badge</span>";
+            if ($disabled) echo " <span class='badge off'>Disabled</span>";
+            if ($st==1 && (int)$row['last_result']==2) echo "<div class='sub red'>Last backup failed</div>";
+            echo ($pre_states[$row['pre_install']] ?? "")."</td>";
 
-            echo '<td class="ip'.$color.' status'.$st.' align-center">'.h($row['last_backup']);
-            if($st>1) echo '<br><span class=hint>Last try: '.h($row['backup_started']).'</span>';
-            echo '<br><span class=hint>Next try: '.h($row['next_try']).'</span>';
-//	    echo '<br><span class=hint>Time slots: '.$row['time_slots'].'</span>';
+            echo '<td class="nowrap"><span class="ts">'.short_date($row['last_backup']).'</span>';
+            if($st>1) echo '<div class="sub">Last try: '.short_date($row['backup_started']).'</div>';
+            echo '<div class="sub">Next try: '.short_date($row['next_try']).'</div>';
             echo '</td>';
 
-            echo '<td class="ip'.$color.'">'.h($row['description']).'</td>';
-            echo '<td class="ip'.$color.'">
-            <a href="index.php?host='.$id.'&action=backup" class="red no-underline" title="Backup now!">&#128190;</a>
-            <a href="index.php?host='.$id.'&action=edit" class="red no-underline" title="Edit host">&#128736;</a>
-            <a href="index.php?host='.$id.'&action=unlock" class="red no-underline" title="Unlock host">&#128275;</a>
-            <a href="index.php?host='.$id.'&action=log" class="red no-underline" title="Last backup log">&#128220;</a>
-            <a href="index.php?host='.$id.'&action=delete" class="red no-underline" title="Delete host">&#10060;</a>
-            </td>';
+            echo '<td class="desc">'.h($row['description']).'</td>';
+            echo '<td class="actions">'
+                .'<a href="index.php?host='.$id.'&action=backup" title="Backup now">'.icon('backup').'</a>'
+                .'<a href="index.php?host='.$id.'&action=edit" title="Edit host">'.icon('edit').'</a>'
+                .'<a href="index.php?host='.$id.'&action=unlock" title="Unlock host">'.icon('unlock').'</a>'
+                .'<a href="index.php?host='.$id.'&action=log" title="Last backup log">'.icon('log').'</a>'
+                .'<a href="index.php?host='.$id.'&action=delete" class="danger" title="Delete host">'.icon('delete').'</a>'
+                .'</td>';
             echo '</tr>';
-//            if ($color==0) $color++; else $color=0;
             $i++;
 	    isset($status_arr[$st]) ? $status_arr[$st]++ : $status_arr[$st] = 1;
         }
-        echo "</table>";
-        echo "<br><b>Total:</b> $i hosts<br>";
+        echo "</tbody></table></div>";
+        echo "<div class='summary'><b>$i</b> hosts";
+        ksort($status_arr);
         foreach($status_arr as $stat => $num) {
-	    echo "<span class='status".$stat."'><b>".h($status[$stat] ?? $stat)."</b></span> - $num<br>";
+	    echo " <span class='badge s$stat'>".h($status[$stat] ?? $stat)." $num</span>";
         }
+        echo "</div>";
     }
 
 }
@@ -382,12 +472,14 @@ else {
 
 	$host_data = array();
 	$host_vars = array();
-	if ($action !="add") {
+	$group_actions = array('groups', 'group_edit', 'group_delete');
+	if ($action !="add" && !in_array($action, $group_actions)) {
             // Getting host vars
             $res = db_query($db, "select hosts.*, host_groups.path from hosts left join host_groups on hosts.group_id=host_groups.id where hosts.id=?", array($host_id));
             $host_data = $res->fetch_array();
             if (!$host_data) {
-                echo "<center><h3>Host not found</h3><a href='index.php'>Go back to the host list</a></center></body></html>";
+                notice("Host not found. <a href='index.php'>Go back to the host list</a>", "err");
+                echo "</main></body></html>";
                 $db->close();
                 die();
             }
@@ -409,12 +501,11 @@ else {
                 echo "<form method='post' action='index.php?$grouplink'><input type='hidden' name='confirm' value='yes'>$csrf_input
                 <input type='hidden' name='id' value='$hid'>
                 <input type='hidden' name='action' value='delete'>
-                <center><h3>You are going to delete host<br><br>
-                <span class=red>$hname</span><br><br>
-                Are you sure?<br><br>
-                <input type='submit' value='Yes, I am sure'>
-                <a href='index.php?$grouplink'>No, go back</a>
-                </center>
+                <div class='card'><h3>Delete host $hname?</h3>
+                <p>The host will be removed from PHBackup. Backup files on disk are not deleted.</p>
+                <button type='submit' class='btn danger'>Delete</button>
+                <a class='btn' href='index.php?$grouplink'>Cancel</a>
+                </div>
                 </form>";
                 break;
             case 'unlock':
@@ -423,19 +514,18 @@ else {
                 <input type='hidden' name='id' value='$hid'>
                 <input type='hidden' name='action' value='unlock'>";
 		if($host_data['worker']>-1)
-                    echo "<center><h4>Host <span class=red>$hname</span><br>
-	            is locked by backup worker ".(int)$host_data['worker']." since ".h($host_data['backup_started'])."<br><br>
-    	    	    Unlocking does not stop the running backup process. Stuck hosts are unlocked automatically after 5 minutes.<br>
-    	    	    Do you want to unlock it?<br><br>
-    	    	    <input type='submit' value='Yes, I am sure'>
-    	    	    <a href='index.php?$grouplink'>No, go back</a>
-    		    </center>
+                    echo "<div class='card'><h3>Unlock host $hname?</h3>
+	            <p>It is locked by backup worker ".(int)$host_data['worker']." since ".h($host_data['backup_started']).".<br>
+    	    	    Unlocking does not stop the running backup process. Stuck hosts are unlocked automatically after 5 minutes.</p>
+    	    	    <button type='submit' class='btn primary'>Unlock</button>
+    	    	    <a class='btn' href='index.php?$grouplink'>Cancel</a>
+    		    </div>
     	            </form>";
     	        else
-                    echo "<center><h4>Host <span class=red>$hname</span><br>
-	            is not locked by any backup worker.<br><br>
-    	    	    <a href='index.php?$grouplink'>Go back to the host list</a>
-    		    </center>
+                    echo "<div class='card'><h3>Host $hname</h3>
+	            <p>The host is not locked by any backup worker.</p>
+    	    	    <a class='btn' href='index.php?$grouplink'>Back to the host list</a>
+    		    </div>
     	            </form>";
                 break;
             case 'backup':
@@ -444,18 +534,17 @@ else {
                 <input type='hidden' name='id' value='$hid'>
                 <input type='hidden' name='action' value='backup'>";
 		if($host_data['worker']>=0)
-                    echo "<center><h4>Host <span class=red>$hname</span><br>
-	            is being backed up by worker ".(int)$host_data['worker']." since ".h($host_data['backup_started']).".<br><br>
-    	    	    <a href='index.php?$grouplink'>Go back to the host list</a>
-    		    </center>
+                    echo "<div class='card'><h3>Host $hname</h3>
+	            <p>The host is being backed up by worker ".(int)$host_data['worker']." since ".h($host_data['backup_started']).".</p>
+    	    	    <a class='btn' href='index.php?$grouplink'>Back to the host list</a>
+    		    </div>
     	            </form>";
     	        else
-                    echo "<center><h4>Host <span class=red>$hname</span><br>
-	            is not locked by any backup worker.<br><br>
-    	    	    Do you want to start a new backup now?<br><br>
-    	    	    <input type='submit' value='Yes, I am sure'>
-    	    	    <a href='index.php?$grouplink'>No, go back</a>
-    		    </center>
+                    echo "<div class='card'><h3>Back up host $hname now?</h3>
+	            <p>The backup starts within a few seconds, regardless of time slots.</p>
+    	    	    <button type='submit' class='btn primary'>Start backup</button>
+    	    	    <a class='btn' href='index.php?$grouplink'>Cancel</a>
+    		    </div>
     	            </form>";
                 break;
             case 'edit':
@@ -464,18 +553,18 @@ else {
                 <input type='hidden' name='id' value='$hid'>
                 <input type='hidden' name='action' value='edit'>
                 <input type='hidden' name='confirm' value='yes'>$csrf_input
-                <h2>Edit host $hname</h2>";
-	        echo "<table border='0' cellspacing='5' cellpadding='5' width='100%'>";
+                <h2>Edit host <span class='muted'>$hname</span></h2>";
+	        echo "<table class='form'>";
         	DrawHost($host_data, $host_vars);
-	        echo "<tr><td></td><td class='ip1'><input type='submit' value='Apply changes'></td></tr></table>";
+	        echo "<tr><td></td><td><button type='submit' class='btn primary'>Apply changes</button> <a class='btn' href='index.php?$grouplink'>Cancel</a></td></tr></table></form>";
                 break;
             case 'log':
         	// Show log
-                echo "<h2>Last backup log for $hname</h2>";
+                echo "<h2>Last backup log <span class='muted'>$hname</span></h2>";
 		$logfile = (valid_host_name($host_data['name']) && valid_group_path($host_data['path'])) ? host_backup_path($host_data)."/backup.log" : "";
 		if ($logfile != "" && file_exists($logfile))
 		{
-		    echo "<pre>";
+		    echo "<pre class='log'>";
 		    $fp = @fopen($logfile, "r");
 		    if ($fp) {
 		        while (($buffer = fgets($fp, 4096)) !== false) {
@@ -489,7 +578,75 @@ else {
 		    else echo "Can not open backup log!";
 		    echo "</pre>";
 		}
-		else echo "No backup log available!";
+		else notice("No backup log available.", "warn");
+                break;
+            case 'groups':
+        	// Host groups list
+                echo "<h2>Host groups</h2>";
+                $gres = $db->query("SELECT host_groups.*, COUNT(hosts.id) AS hosts_num FROM host_groups LEFT JOIN hosts ON hosts.group_id=host_groups.id GROUP BY host_groups.id ORDER BY host_groups.name");
+                echo "<div class='table-wrap narrow'><table class='hosts'><thead><tr><th>Name</th><th>Backup directory</th><th>Hosts</th><th class='actions'></th></tr></thead><tbody>";
+                while ($row = $gres->fetch_array()) {
+                    $gid = (int)$row['id'];
+                    echo "<tr><td><a class='host' href='index.php?group=$gid'>".h($row['name'])."</a></td>"
+                        ."<td class='mono'>".h(group_dir($row['path']))."/</td>"
+                        ."<td>".(int)$row['hosts_num']."</td>"
+                        ."<td class='actions'>"
+                        ."<a href='index.php?action=group_edit&id=$gid' title='Edit group'>".icon('edit')."</a>"
+                        ."<a href='index.php?action=group_delete&id=$gid' class='danger' title='Delete group'>".icon('delete')."</a>"
+                        ."</td></tr>";
+                }
+                echo "</tbody></table></div>";
+
+                echo "<h3 class='section'>Add group</h3>
+                <form method='post' action='index.php?action=groups'>
+                <input type='hidden' name='action' value='group_add'>
+                <input type='hidden' name='confirm' value='yes'>$csrf_input
+                <table class='form narrow'>
+                <tr><td>Name</td><td><input type='text' name='group_name'></td></tr>
+                <tr><td>Path<span class=hint>Subdirectory inside ".h(rtrim($backup_path, '/'))." for backups of this group. Empty - backups are stored in the root of backup directory</span></td><td><input type='text' name='group_path' class='mono'></td></tr>
+                <tr><td></td><td><button type='submit' class='btn primary'>Add group</button></td></tr>
+                </table></form>";
+                break;
+            case 'group_edit':
+        	// Edit host group
+                $gid = (int)($_GET['id'] ?? 0);
+                $group = db_query($db, "SELECT * FROM host_groups WHERE id=?", array($gid))->fetch_array();
+                if (!$group) { notice("Group not found. <a href='index.php?action=groups'>Back to groups</a>", "err"); break; }
+                $hosts_num = db_query($db, "SELECT id FROM hosts WHERE group_id=?", array($gid))->num_rows;
+                echo "<h2>Edit group <span class='muted'>".h($group['name'])."</span></h2>
+                <form method='post' action='index.php?action=groups'>
+                <input type='hidden' name='action' value='group_edit'>
+                <input type='hidden' name='id' value='$gid'>
+                <input type='hidden' name='confirm' value='yes'>$csrf_input
+                <table class='form narrow'>
+                <tr><td>Name</td><td><input type='text' name='group_name' value='".h($group['name'])."'></td></tr>
+                <tr><td>Path<span class=hint>Subdirectory inside ".h(rtrim($backup_path, '/'))." for backups of this group. Empty - backups are stored in the root of backup directory</span>"
+                    .($hosts_num > 0 ? "<span class='hint'>New backups of $hosts_num host(s) will go to the new directory, existing backups stay where they are</span>" : "")
+                    ."</td><td><input type='text' name='group_path' class='mono' value='".h($group['path'])."'></td></tr>
+                <tr><td></td><td><button type='submit' class='btn primary'>Apply changes</button> <a class='btn' href='index.php?action=groups'>Cancel</a></td></tr>
+                </table></form>";
+                break;
+            case 'group_delete':
+        	// Delete host group
+                $gid = (int)($_GET['id'] ?? 0);
+                $group = db_query($db, "SELECT * FROM host_groups WHERE id=?", array($gid))->fetch_array();
+                if (!$group) { notice("Group not found. <a href='index.php?action=groups'>Back to groups</a>", "err"); break; }
+                $hosts_num = db_query($db, "SELECT id FROM hosts WHERE group_id=?", array($gid))->num_rows;
+                $gname = h($group['name']);
+                if ($hosts_num > 0) {
+                    echo "<div class='card'><h3>Group $gname can not be deleted</h3>
+                    <p>It has $hosts_num host(s). Move them to another group or delete them first.</p>
+                    <a class='btn' href='index.php?group=$gid'>Show hosts</a> <a class='btn' href='index.php?action=groups'>Back to groups</a></div>";
+                    break;
+                }
+                echo "<form method='post' action='index.php?action=groups'><input type='hidden' name='confirm' value='yes'>$csrf_input
+                <input type='hidden' name='id' value='$gid'>
+                <input type='hidden' name='action' value='group_delete'>
+                <div class='card'><h3>Delete group $gname?</h3>
+                <p>The group has no hosts. Files on disk are not touched.</p>
+                <button type='submit' class='btn danger'>Delete</button>
+                <a class='btn' href='index.php?action=groups'>Cancel</a>
+                </div></form>";
                 break;
             default:
         	// Add new host
@@ -497,9 +654,9 @@ else {
                 <input type='hidden' name='action' value='add'>
                 <input type='hidden' name='confirm' value='yes'>$csrf_input
                 <h2>Add new host</h2>";
-	        echo "<table border='0' cellspacing='5' cellpadding='5' width='100%'>";
+	        echo "<table class='form'>";
         	DrawHost(null, null);
-	        echo "<tr><td></td><td class='ip1'><input type='submit' value='Add new host'></td></tr></table>";
+	        echo "<tr><td></td><td><button type='submit' class='btn primary'>Add host</button> <a class='btn' href='index.php?$grouplink'>Cancel</a></td></tr></table></form>";
         }
     }
 }
@@ -509,8 +666,6 @@ else {
 $db->close();
 
 ?>
-
-
-
+</main>
 </body>
 </html>

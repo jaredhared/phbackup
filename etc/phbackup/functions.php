@@ -200,8 +200,9 @@ function mark_backup_failed($db, $host_id) {
 }
 
 
-// Parses timestamp from backup name, returns unix time or false
-function backup_timestamp($datestamp) {
+// Parses timestamp from backup name, returns unix time or false.
+// Note: functions named backup_* are treated as backup functions, so helpers must not use this prefix
+function parse_backup_timestamp($datestamp) {
     $dt = DateTime::createFromFormat('Y-m-d_H:i:s', $datestamp);
     return $dt === false ? false : $dt->getTimestamp();
 }
@@ -226,11 +227,11 @@ function rotate_backups($bkpath, $keep_days, $min_keep, $suffix = '') {
         if ($suffix == '' ? !is_dir($full) : !is_file($full)) continue;
 
         if (preg_match('/^(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})'.$q.'$/', $entry, $m)) {
-            $ts = backup_timestamp($m[1]);
+            $ts = parse_backup_timestamp($m[1]);
             if ($ts !== false) $backups[$entry] = $ts;
         }
         elseif (preg_match('/^(processing|error)-(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})'.$q.'$/', $entry, $m)) {
-            $ts = backup_timestamp($m[2]);
+            $ts = parse_backup_timestamp($m[2]);
             if ($ts !== false) $leftovers[$entry] = $ts;
         }
     }
@@ -369,7 +370,8 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         }
 
         if (is_link("$bkpath/111-Latest")) unlink("$bkpath/111-Latest");
-        symlink("$bkpath/$datestamp", "$bkpath/111-Latest");
+        // Relative link, so host directory can be moved (e.g. when group path is changed)
+        symlink($datestamp, "$bkpath/111-Latest");
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
 
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
@@ -444,7 +446,7 @@ function backup_cisco_switch_via_telnet ($db, $host_data, $host_vars) {
         }
 
         if (is_link("$bkpath/111-Latest.txt")) unlink("$bkpath/111-Latest.txt");
-        symlink($outfile, "$bkpath/111-Latest.txt");
+        symlink("$datestamp.txt", "$bkpath/111-Latest.txt");
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
         cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
