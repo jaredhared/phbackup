@@ -74,11 +74,16 @@ while(true)
                 {
                     $datestart = date("Y-m-d_H:i:s");
 //                    echo "$datestart - [$worker_id] Host ".$row['name']." - Host looks stale, checking ps\n";
-                    $cmd = "ps ax|grep phbackup | grep \"".$row['name']."]\" | grep -v 'ps ax' |wc -l";
-                    $output="";
-                    exec($cmd, $output, $return_code);
-                    if ($return_code>0) echo "Failed: $cmd\n";
-                    if ($output[0] == "0") 
+                    // Looking for a worker which is backing up or cleaning this host
+                    $output = array();
+                    exec("ps -eo args", $output, $return_code);
+                    if ($return_code>0) echo "Failed: ps -eo args\n";
+                    $name_re = '/^phbackup-\d+ \[(backing|cleaning -) '.preg_quote($row['name'], '/').'\]/';
+                    $running = 0;
+                    foreach ($output as $line) {
+                        if (preg_match($name_re, $line)) $running++;
+                    }
+                    if ($return_code==0 && $running == 0)
                     {
                         echo "$datestart - [$worker_id] Host ".$row['name']." - Host is stale, unlocking\n";
                         $sql="UPDATE hosts set worker=-1, status=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=".$row['id'];
@@ -129,39 +134,46 @@ while(true)
                 $res = $db->query($sql);
                 $host_data = $res->fetch_array();
 
+                $host_vars = array();
                 $sql="select * from host_vars where host=".$host_id.";";
                 $res = $db->query($sql);
                 while ($row = $res->fetch_array()) {
                     $host_vars[$row['var']] = $row['value'];
                 }
 
-                $ssh_opts="-ocompression=no -oLogLevel=ERROR -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -p ".$host_data['port'];
-                $scp_opts="-ocompression=no -oLogLevel=ERROR -oServerAliveInterval=3 -oServerAliveCountMax=806400 -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -P ".$host_data['port'];
-
-
-                $bkpath = $backup_path."/".$host_data['path']."/".$host_data['name'];
-		if (!is_dir($bkpath)) exec("mkdir -p $bkpath");
-                file_put_contents("$bkpath/tmp.sh", base64_decode($host_vars['pre_script']));
-                file_put_contents("$bkpath/tmp.cron", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n");
-	        exec("tr -d '\r' < $bkpath/tmp.sh > $bkpath/phbackup.sh && rm $bkpath/tmp.sh");
-	        exec("tr -d '\r' < $bkpath/tmp.cron > $bkpath/phbackup && rm $bkpath/tmp.cron");
-
 	        $updateok=0;
-                $cmd = "ssh $ssh_opts ".$host_data['user']."@".$host_data['ip']." \"mkdir -p /opt > /dev/null\"";
-                exec($cmd, $output, $return_code);
-                if ($return_code>0) echo "Failed: $cmd\n";
-                $cmd = "chmod 750 $bkpath/phbackup.sh && scp $scp_opts $bkpath/phbackup.sh ".$host_data['user']."@".$host_data['ip'].":/opt/ > /dev/null";
-                exec($cmd, $output, $return_code);
-                if ($return_code>0) echo "Failed: $cmd\n";
-                $updateok += $return_code;
-                $cmd = "ssh $ssh_opts ".$host_data['user']."@".$host_data['ip']." \"rm -f /etc/cron.d/phbackup.cron\"";
-                exec($cmd, $output, $return_code);
-                if ($return_code>0) echo "Failed: $cmd\n";
-                $updateok += $return_code;
-                $cmd = "scp $scp_opts $bkpath/phbackup ".$host_data['user']."@".$host_data['ip'].":/etc/cron.d/ > /dev/null";
-                exec($cmd, $output, $return_code);
-                if ($return_code>0) echo "Failed: $cmd\n";
-                $updateok += $return_code;
+                $host_error = check_host_data($host_data);
+                if ($host_error != "") {
+                    echo "$datestart - [$worker_id] Host ".$host_data['name']." - $host_error\n";
+                    $updateok = 1;
+                }
+                else {
+                    $ssh_opts = ssh_options($host_data['port'], "-p");
+                    $scp_opts = ssh_options($host_data['port'], "-P");
+                    $target = escapeshellarg($host_data['user']."@".$host_data['ip']);
+
+                    $bkpath = host_backup_path($host_data);
+                    if (!is_dir($bkpath)) mkdir($bkpath, 0750, true);
+                    file_put_contents("$bkpath/phbackup.sh", str_replace("\r", "", base64_decode($host_vars['pre_script'])));
+                    file_put_contents("$bkpath/phbackup", str_replace("\r", "", "# Updated at ".$datestart."\n".base64_decode($host_vars['pre_schedule'])."\n"));
+                    chmod("$bkpath/phbackup.sh", 0750);
+
+                    $cmd = "ssh $ssh_opts $target \"mkdir -p /opt > /dev/null\"";
+                    exec($cmd, $output, $return_code);
+                    if ($return_code>0) echo "Failed: $cmd\n";
+                    $cmd = "scp $scp_opts ".escapeshellarg("$bkpath/phbackup.sh")." ".escapeshellarg($host_data['user']."@".$host_data['ip'].":/opt/")." > /dev/null";
+                    exec($cmd, $output, $return_code);
+                    if ($return_code>0) echo "Failed: $cmd\n";
+                    $updateok += $return_code;
+                    $cmd = "ssh $ssh_opts $target \"rm -f /etc/cron.d/phbackup.cron\"";
+                    exec($cmd, $output, $return_code);
+                    if ($return_code>0) echo "Failed: $cmd\n";
+                    $updateok += $return_code;
+                    $cmd = "scp $scp_opts ".escapeshellarg("$bkpath/phbackup")." ".escapeshellarg($host_data['user']."@".$host_data['ip'].":/etc/cron.d/")." > /dev/null";
+                    exec($cmd, $output, $return_code);
+                    if ($return_code>0) echo "Failed: $cmd\n";
+                    $updateok += $return_code;
+                }
 
 	        if($updateok==0)
 	        {
@@ -262,6 +274,7 @@ while(true)
             $res = $db->query($sql);
             $host_data = $res->fetch_array();
 
+            $host_vars = array();
             $sql="select * from host_vars where host=".$host_id.";";
             $res = $db->query($sql);
             while ($row = $res->fetch_array()) {

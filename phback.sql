@@ -66,8 +66,8 @@ CREATE TABLE `host_vars` (
 LOCK TABLES `host_vars` WRITE;
 /*!40000 ALTER TABLE `host_vars` DISABLE KEYS */;
 INSERT INTO `host_vars` VALUES
-(1,10000,'version','162'),
-(2,10000,'version_text','1.6.2');
+(1,10000,'version','165'),
+(2,10000,'version_text','1.6.5');
 /*!40000 ALTER TABLE `host_vars` ENABLE KEYS */;
 UNLOCK TABLES;
 

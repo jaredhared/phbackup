@@ -106,7 +106,7 @@ This can be done via pre-backup scripts. Estimate their time to run and adjust t
 
 > Is there any foolproof for input fields?
 
-At the moment no, as I said, it was written in one day, so there are no syntax checks for input fields. Be careful and responsible during configuration - this is your backup system. :)
+Since 1.6.5 host name, IP, user, port, periods and rsync options are validated. Host name may contain only latin letters, digits, dots, dashes and underscores, since it is used as a backup directory name. Rsync options with values should be written as `--option=value`; options which run commands or point rsync to local files (`-e`, `--rsh`, `--rsync-path`, `--files-from` etc.) are not allowed. Pre-backup scripts are still run as root as is, so be careful and responsible - this is your backup system. :)
 
 
 

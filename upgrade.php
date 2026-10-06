@@ -190,7 +190,25 @@ function upgrade_164_1_6_4($db) {
     if (!isset($script_vars['version'])) {$sql="UPDATE host_vars SET value=164 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
     if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.6.4' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $mysqli->error); }
 
-    if ($ok==2) { echo "Done!\n"; return true; } 
+    if ($ok==2) { echo "Done!\n"; return true; }
+    else { echo "Error!\n"; return false; }
+};
+
+
+function upgrade_165_1_6_5($db) {
+    echo "Upgrading to 1.6.5... ";
+
+    $ok=0;
+
+    // Old default rsync options did not preserve permissions, owners, hard links, ACLs and xattrs.
+    // Only untouched defaults are replaced, custom options are left as is.
+    $sql="UPDATE host_vars SET value='".DEFAULT_RSYNC_OPTIONS."' WHERE var='rsync_options' AND value IN ('-vbrltz','-vbrlt')"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error);
+    echo "\n  rsync options updated for ".$db->affected_rows." host(s). Next backup of these hosts may copy much of the data again instead of hard-linking it (owners and permissions are now compared), check free disk space!\n  ";
+
+    if (!isset($script_vars['version'])) {$sql="UPDATE host_vars SET value=165 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error); }
+    if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.6.5' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error); }
+
+    if ($ok==3) { echo "Done!\n"; return true; }
     else { echo "Error!\n"; return false; }
 };
 

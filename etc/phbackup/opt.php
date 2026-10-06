@@ -18,6 +18,9 @@ $cmd_rsync = '/usr/bin/rsync';
 // Backup path to store everything
 $backup_path = '/var/www/phbackup';
 
+// How many newest backups of each host are always kept, even if they are older than keep period
+$backup_min_keep = 3;
+
 // Paths to include by default
 $default_include_paths="/etc
 /home

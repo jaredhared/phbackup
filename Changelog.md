@@ -1,5 +1,17 @@
 # PHBackup changelog
 
+## 1.6.5
+
+* **Security:** fixed SQL injections, XSS and shell command injections in web interface and backup workers. A compromised host could get root access to the backup server via file names shown in the backup log
+* **Security:** added CSRF protection to all web forms
+* Host fields and rsync options are validated now. Hosts with invalid data in DB (e.g. spaces in name) will fail with an error in worker log until fixed
+* Fixed failed backups being reported as successful when rsync could not start (e.g. invalid rsync options)
+* Old backups are now removed by the date in their name, and the newest `$backup_min_keep` (default 3) backups are always kept, so a host which fails for a long time does not lose all its backups
+* Default rsync options are now `-aHAXz --numeric-ids` (permissions, owners, hard links, ACLs and xattrs are preserved). Upgrade replaces old default options for existing hosts; next backup may take more space
+* Fixed backup log for hosts in groups with a subdirectory
+* Zabbix data is generated with json_encode, so it is always a valid JSON
+* Telnet password is not written to disk anymore
+
 ## 1.6.4
 
 * Fixed - Rsync options were not applied
