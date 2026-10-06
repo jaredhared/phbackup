@@ -24,7 +24,7 @@ $csrf_input = "<input type='hidden' name='csrf' value='".h($_SESSION['csrf'])."'
 
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$db=mysqli_connect($db_host,$db_user,$db_pass, $db_name);
+$db=db_connect();
 
 // Getting vars from DB
 $script_vars = get_script_vars($db);
@@ -77,7 +77,7 @@ function DrawHost($host_data, $host_vars) {
     if (isset($host_vars['exclude_paths'])) $exclude_paths=base64_decode($host_vars['exclude_paths']); else $exclude_paths=$default_exclude_paths;
     if (isset($host_vars['pre_script'])) $pre_script=base64_decode($host_vars['pre_script']); else $pre_script=$default_pre_script;
     if (isset($host_vars['pre_schedule'])) $pre_schedule=base64_decode($host_vars['pre_schedule']); else $pre_schedule=$default_pre_schedule;
-    echo "<tr><td>Host name<span class=hint>Latin letters, digits, dots, dashes and underscores. Used as backup directory name</span></td><td><input type='text' size='100' name='name' value='".h($name)."'></td></tr>";
+    echo "<tr><td>Host name<span class=hint>Latin letters, digits, dots, dashes and underscores. Used as backup directory name: after renaming, backups go to a new directory</span></td><td><input type='text' size='100' name='name' value='".h($name)."'></td></tr>";
     echo "<tr><td>Host description</td><td><input type='text' size='100' name='description' value='".h($description)."'></td></tr>";
     echo "<tr><td>Host IP</td><td><input type='text' size='100' name='ip' value='".h($ip)."'></td></tr>";
     echo "<tr><td>Host group<span class=hint>Groups can be backed up into separate subdirectories</span></td><td>$group_select <a href='index.php?action=groups' class='small'>Edit groups</a></td></tr>";
@@ -311,6 +311,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 		$errors = validate_host_form($db, $_POST);
 		$res = db_query($db, "SELECT id FROM hosts WHERE name=? AND id<>?", array($_POST['name'] ?? '', $post_id));
 		if ($res->num_rows > 0) $errors[] = "Host with this name already exists";
+		// Running backup is tracked by host name, renaming would make it look stale and start a second backup
+		$cur = db_query($db, "SELECT name, worker FROM hosts WHERE id=?", array($post_id))->fetch_array();
+		if ($cur && $cur['worker'] >= 0 && ($_POST['name'] ?? '') !== $cur['name']) $errors[] = "Host can not be renamed while it is being backed up";
 		$updated_times=normalize_time_periods($_POST['timestr'] ?? '');
 		if ($updated_times == "") $errors[] = "Backup time slots are invalid, host would never be backed up";
 		if (!empty($errors)) { print_errors($errors); break; }
@@ -318,7 +321,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 		// If checkbox is on, scheduling script install
 		(isset($_POST['pre_install']) && $_POST['pre_install']=="on") ? $pre_install="1" : $pre_install="0";
 
-		db_query($db, "UPDATE hosts SET name=?, description=?, group_id=?, ip=?, port=?, user=?, ssh_key=?, time_slots=?, pre_install=?, enabled=? WHERE id=?",
+		// Unchecked box keeps current state, so pending or failed installation is not reset by editing other fields
+		db_query($db, "UPDATE hosts SET name=?, description=?, group_id=?, ip=?, port=?, user=?, ssh_key=?, time_slots=?, pre_install=IF(?='1', 1, pre_install), enabled=? WHERE id=?",
 		    array($_POST['name'], $_POST['description'] ?? '', (int)$_POST['group'], $_POST['ip'], (int)$_POST['port'], $_POST['user'], $_POST['ssh_key'] ?? '', $updated_times, $pre_install, $enabled, $post_id));
 
 		save_host_vars($db, $post_id, $_POST);
@@ -340,8 +344,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['confirm']) && $_POST[
 
         case "backup":
 		// A running backup is not interrupted, otherwise a second backup of the same host would start in parallel
-		if (db_query($db, "UPDATE hosts SET backup_now=1 WHERE id=? AND worker=-1", array($post_id)) == 1) notice("Backup of host id $post_id will start soon");
-		else notice("Host id $post_id is being backed up right now. If it is stuck, unlock it first.", "err");
+		if (db_query($db, "UPDATE hosts SET backup_now=1 WHERE id=? AND worker=-1 AND enabled=1", array($post_id)) == 1) notice("Backup of host id $post_id will start soon");
+		else {
+		    $cur = db_query($db, "SELECT enabled, worker FROM hosts WHERE id=?", array($post_id))->fetch_array();
+		    if (!$cur) notice("Host not found", "err");
+		    elseif ($cur['enabled'] != 1) notice("Host id $post_id is disabled. Enable backups in host settings first.", "err");
+		    else notice("Host id $post_id is being backed up right now. If it is stuck, unlock it first.", "err");
+		}
                 break;
 
 	// Host groups
@@ -553,6 +562,13 @@ else {
                     echo "<div class='card'><h3>Host $hname</h3>
 	            <p>The host is being backed up by worker ".(int)$host_data['worker']." since ".h($host_data['backup_started']).".</p>
     	    	    <a class='btn' href='index.php?$grouplink'>Back to the host list</a>
+    		    </div>
+    	            </form>";
+    	        elseif($host_data['enabled']!=1)
+                    echo "<div class='card'><h3>Host $hname is disabled</h3>
+	            <p>Enable backups in host settings first.</p>
+    	    	    <a class='btn' href='index.php?action=edit&host=$hid'>Host settings</a>
+    	    	    <a class='btn' href='index.php?$grouplink'>Cancel</a>
     		    </div>
     	            </form>";
     	        else

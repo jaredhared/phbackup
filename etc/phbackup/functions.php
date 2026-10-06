@@ -13,6 +13,33 @@ if (file_exists("/etc/phbackup/functions.custom.php")) {
 const DEFAULT_RSYNC_OPTIONS = "-aHAXz --numeric-ids";
 
 
+// ---------------------------------------------------------------------------
+// Time zone.
+// PHP often runs in UTC (date.timezone is not set in php.ini), while MySQL uses system time.
+// Then time slots are checked in UTC and backup times written by PHP do not match NOW() in SQL.
+// So PHP uses $timezone from opt.php or system time zone, and every DB connection uses the same offset.
+// ---------------------------------------------------------------------------
+
+function system_timezone() {
+    $link = @readlink('/etc/localtime');
+    if ($link !== false && preg_match('#zoneinfo/(.+)$#', $link, $m)) return $m[1];
+    $tz = @file_get_contents('/etc/timezone');
+    return $tz === false ? '' : trim($tz);
+}
+
+$phb_tz = !empty($timezone) ? $timezone : system_timezone();
+if ($phb_tz !== '') @date_default_timezone_set($phb_tz);
+
+
+// Connects to DB and sets session time zone to PHP one, so NOW() and date() give the same time
+function db_connect() {
+    global $db_host, $db_user, $db_pass, $db_name;
+    $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    $db->query("SET time_zone='".date('P')."'");
+    return $db;
+}
+
+
 function get_script_vars($db) {
     $script_vars = array();
     $sql="select * from host_vars where host=10000;";
@@ -181,6 +208,13 @@ function check_host_data($host_data) {
 }
 
 
+// Host address for rsync/scp remote path: IPv6 address must be in brackets, otherwise
+// "user@::1:/" is treated by rsync as a daemon connection
+function remote_addr($ip) {
+    return strpos($ip, ':') !== false ? "[$ip]" : $ip;
+}
+
+
 // Backup directory of the host
 function host_backup_path($host_data) {
     global $backup_path;
@@ -292,7 +326,7 @@ function run_backup ($db, $host_data, $host_vars) {
 function finish_backup_ok ($db, $host_data, $host_vars) {
     global $nextbackup, $datestart, $host_id;
 
-    $backup_period = max(1, (int)$host_vars['backup_period']);
+    $backup_period = max(1, (int)($host_vars['backup_period'] ?? 24));
     // "Backup now" does not shift the schedule: if the next regular backup is already planned, it is kept.
     // Previously next_try was set to NOW(), and the host was backed up again right away.
     if ($host_data['backup_now']==1)
@@ -343,7 +377,7 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
             ." --exclude-from=".escapeshellarg("$bkpath/exclude.txt")
             ." --files-from=".escapeshellarg("$bkpath/files.txt")
             ." --link-dest=../111-Latest"
-            ." ".escapeshellarg($host_data['user']."@".$host_data['ip'].":/")
+            ." ".escapeshellarg($host_data['user']."@".remote_addr($host_data['ip']).":/")
             ." ".escapeshellarg("$processing/")
             ." >/dev/null 2>".escapeshellarg($stderr_file);
         $output = array();
@@ -397,7 +431,7 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
 
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
         cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
-        $removed = rotate_backups($bkpath, $host_vars['backup_keep_period'], $backup_min_keep ?? 3);
+        $removed = rotate_backups($bkpath, $host_vars['backup_keep_period'] ?? 30, $backup_min_keep ?? 3);
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups (".count($removed)." removed)\n";
 
         finish_backup_ok($db, $host_data, $host_vars);
@@ -471,7 +505,7 @@ function backup_cisco_switch_via_telnet ($db, $host_data, $host_vars) {
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
         cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
-        $removed = rotate_backups($bkpath, $host_vars['backup_keep_period'], $backup_min_keep ?? 3, '.txt');
+        $removed = rotate_backups($bkpath, $host_vars['backup_keep_period'] ?? 30, $backup_min_keep ?? 3, '.txt');
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups (".count($removed)." removed)\n";
 
         finish_backup_ok($db, $host_data, $host_vars);

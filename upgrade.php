@@ -64,7 +64,7 @@ function run_upgrade($db, $upgrade_versions) {
 
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$db=mysqli_connect($db_host,$db_user,$db_pass, $db_name);
+$db=db_connect();
 
 $script_vars = get_script_vars($db);
 isset($script_vars['version']) ? $script_ver = $script_vars['version'] : $script_ver = 1;

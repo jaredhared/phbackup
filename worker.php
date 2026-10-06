@@ -51,12 +51,12 @@ function log_msg($msg) {
 // Connects to DB. If DB is not available, waits and retries instead of crashing,
 // so a DB restart does not leave workers in FATAL state in Supervisor
 function db_connect_retry() {
-    global $db_host, $db_user, $db_pass, $db_name, $db_retry_step;
+    global $db_retry_step;
 
     $reported = false;
     while (true) {
         try {
-            $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+            $db = db_connect();
             if ($reported) log_msg("DB connection restored");
             return $db;
         }
@@ -169,9 +169,9 @@ function install_pre_script($db) {
 
         $cmds = array(
             "ssh $ssh_opts $target \"mkdir -p /opt > /dev/null\"",
-            "scp $scp_opts ".escapeshellarg("$bkpath/phbackup.sh")." ".escapeshellarg($host_data['user']."@".$host_data['ip'].":/opt/")." > /dev/null",
+            "scp $scp_opts ".escapeshellarg("$bkpath/phbackup.sh")." ".escapeshellarg($host_data['user']."@".remote_addr($host_data['ip']).":/opt/")." > /dev/null",
             "ssh $ssh_opts $target \"rm -f /etc/cron.d/phbackup.cron\"",
-            "scp $scp_opts ".escapeshellarg("$bkpath/phbackup")." ".escapeshellarg($host_data['user']."@".$host_data['ip'].":/etc/cron.d/")." > /dev/null",
+            "scp $scp_opts ".escapeshellarg("$bkpath/phbackup")." ".escapeshellarg($host_data['user']."@".remote_addr($host_data['ip']).":/etc/cron.d/")." > /dev/null",
         );
         foreach ($cmds as $cmd) {
             $output = array();

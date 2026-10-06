@@ -5,12 +5,13 @@
 
 // Settings
 include("/etc/phbackup/opt.php");
+require "/etc/phbackup/functions.php";
 
 // Extra hours added to backup period before backup is considered overdue
 isset($zabbix_age_slack) ? $age_slack = (int)$zabbix_age_slack : $age_slack = 2;
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$db=mysqli_connect($db_host,$db_user,$db_pass, $db_name);
+$db=db_connect();
 
 if (PHP_SAPI != "cli") header("Content-Type: application/json; charset=utf-8");
 

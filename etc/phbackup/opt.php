@@ -18,6 +18,9 @@ $cmd_rsync = '/usr/bin/rsync';
 // Backup path to store everything
 $backup_path = '/var/www/phbackup';
 
+// Time zone for backup time slots and dates, like 'Europe/Moscow'. Empty - system time zone
+$timezone = '';
+
 // How many newest backups of each host are always kept, even if they are older than keep period
 $backup_min_keep = 3;
 

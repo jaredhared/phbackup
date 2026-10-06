@@ -36,7 +36,8 @@ function upgrade_notes() {
                              "etc/supervisor/conf.d/phbackup.conf", "zabbix/phbackup.conf"),
             'steps' => array(
                 "etc/phbackup/upgrades.php is a new file: copy it BEFORE running upgrade.php, otherwise neither upgrade.php nor web interface start",
-                "etc/phbackup/opt.php: do not overwrite, add the new option \$backup_min_keep = 3; (optional, 3 is the default)",
+                "etc/phbackup/opt.php: do not overwrite, add new options (optional): \$backup_min_keep = 3; and \$timezone = ''; (empty - system time zone)",
+                "Time zone: PHP now uses system time zone instead of UTC. If php.ini had no date.timezone, last/next backup times of existing hosts are shown shifted until their next backup, and time slots are now checked in local time",
                 "Supervisor config: keep your numprocs value, then run: supervisorctl update",
                 "Zabbix: change the crontab line as described in README (write via temporary file) and re-import zabbix/PHBackup.yaml with \"Delete missing\" checked",
                 "Default rsync options are replaced for hosts with old defaults, next backup of these hosts may take more space",
