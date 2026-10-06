@@ -6,6 +6,9 @@
 * **Security:** added CSRF protection to all web forms
 * Host fields and rsync options are validated now. Hosts with invalid data in DB (e.g. spaces in name) will fail with an error in worker log until fixed
 * Fixed failed backups being reported as successful when rsync could not start (e.g. invalid rsync options)
+* `--recursive` is always passed to rsync: with `--files-from`, `-a` does not imply recursion, so with options without `-r` only empty directories were backed up
+* A backup without any files is considered failed
+* rsync errors from stderr (e.g. reported by remote side) are added to the backup log
 * Old backups are now removed by the date in their name, and the newest `$backup_min_keep` (default 3) backups are always kept, so a host which fails for a long time does not lose all its backups
 * Default rsync options are now `-aHAXz --numeric-ids` (permissions, owners, hard links, ACLs and xattrs are preserved). Upgrade replaces old default options for existing hosts; next backup may take more space
 * Fixed backup log for hosts in groups with a subdirectory

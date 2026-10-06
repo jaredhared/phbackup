@@ -326,11 +326,14 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         file_put_contents("$bkpath/exclude.txt", base64_decode($host_vars['exclude_paths']));
         file_put_contents("$bkpath/files.txt", base64_decode($host_vars['include_paths']));
         file_put_contents("$bkpath/backup.log", "");
+        $stderr_file = "$bkpath/backup.stderr";
 
-        // Backup itself
+        // Backup itself.
+        // --recursive is always needed: with --files-from rsync does not recurse into listed directories,
+        // even with -a, so without it only empty directories would be backed up.
         $cmd = escapeshellarg($cmd_rsync);
         foreach ($rsync_opts as $opt) $cmd .= " ".escapeshellarg($opt);
-        $cmd .= " --partial --relative"
+        $cmd .= " --recursive --partial --relative"
             ." --log-file=".escapeshellarg("$bkpath/backup.log")
             ." -e ".escapeshellarg("nice -n 19 /usr/bin/ssh ".ssh_options($host_data['port']))
             ." --delete --timeout=600 --ignore-errors"
@@ -339,9 +342,14 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
             ." --link-dest=../111-Latest"
             ." ".escapeshellarg($host_data['user']."@".$host_data['ip'].":/")
             ." ".escapeshellarg("$processing/")
-            ." >/dev/null 2>&1";
+            ." >/dev/null 2>".escapeshellarg($stderr_file);
         $output = array();
         exec($cmd, $output, $return_code);
+
+        // Errors are printed to stderr only (e.g. from remote side), adding them to the log shown in web interface
+        $stderr = is_file($stderr_file) ? trim(file_get_contents($stderr_file)) : "";
+        if ($stderr !== "") file_put_contents("$bkpath/backup.log", "\n----- rsync errors -----\n$stderr\n", FILE_APPEND);
+        if (is_file($stderr_file)) unlink($stderr_file);
 
         $dateend = date("Y-m-d H:i:s");
 
@@ -350,6 +358,16 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
         if ($ok && !is_dir($processing)) {
             echo "$dateend - [$worker_id] Host ".$host_data['name']." - Rsync finished with code $return_code, but backup directory is missing!\n";
             $ok = false;
+        }
+        // A backup without a single file is surely wrong (wrong options, empty include list, etc.)
+        if ($ok) {
+            $found = array();
+            exec("find ".escapeshellarg($processing)." -type f -print -quit", $found);
+            if (empty($found)) {
+                echo "$dateend - [$worker_id] Host ".$host_data['name']." - Rsync finished with code $return_code, but no files were backed up!\n";
+                file_put_contents("$bkpath/backup.log", "\nPHBackup: no files were backed up, backup is considered failed\n", FILE_APPEND);
+                $ok = false;
+            }
         }
         if ($ok && $return_code != 0) {
             echo "$dateend - [$worker_id] Host ".$host_data['name']." - Rsync finished with code $return_code (partial transfer), see backup log\n";
