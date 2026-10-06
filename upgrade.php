@@ -83,7 +83,26 @@ if (!is_array($upgrade_versions)) {
 
 
 foreach ($upgrade_versions as $short => $version ) { if ($short > $script_ver) $upgrade_path .= " => $version"; }
-echo "An upgrade is needed: $upgrade_path\n Would you like to update script now? [Y/N]: ";
+echo "An upgrade is needed: $upgrade_path\n\n";
+
+// Files and manual steps for all versions on the upgrade path
+$notes = function_exists('upgrade_notes') ? upgrade_notes() : array();
+$files = array();
+$steps = "";
+foreach ($upgrade_versions as $short => $version) {
+    if ($short <= $script_ver || !isset($notes[$short])) continue;
+    foreach ($notes[$short]['files'] ?? array() as $file) $files[$file] = true;
+    foreach ($notes[$short]['steps'] ?? array() as $step) $steps .= "  [$version] $step\n";
+}
+if (!empty($files)) {
+    echo "Make sure these files are updated (see README, \"Script updating\"):\n";
+    foreach (array_keys($files) as $file) echo "  - $file\n";
+    echo "\n";
+}
+if ($steps !== "") echo "Manual steps:\n$steps\n";
+echo "After upgrade restart workers: supervisorctl restart 'phb-worker:*'\n\n";
+
+echo "Would you like to update script now? [Y/N]: ";
 
 if (strtoupper(trim( fgets( STDIN ) )) == "Y") run_upgrade($db, $upgrade_versions);
 else echo "Exiting without upgrade\n";

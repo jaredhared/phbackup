@@ -95,7 +95,7 @@ Groups are managed on the **Groups** page of web interface. When group path is c
 To update script, you need to do few steps:
 1. Update sources from Git
 2. Place script files inside appropriate directories (daemon, web interface and /etc/ part)
-3. Run upgrade.php to update database
+3. Run upgrade.php to update database. Before upgrading it shows which files have to be updated and which manual steps are needed for your upgrade path, answer N if something is not done yet
 
 ## FAQ
 

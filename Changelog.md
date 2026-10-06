@@ -29,7 +29,7 @@
 * Hosts outside their time slots do not delay other hosts; workers lock hosts without table-wide locks
 * Backup time slots over midnight (22-3) are supported, invalid slots are rejected instead of silently disabling backups
 * Web interface and workers detect a pending DB upgrade (upgrade functions moved to /etc/phbackup/upgrades.php); workers wait until upgrade.php is run
-* upgrade.php stops on the first failed step
+* upgrade.php stops on the first failed step and shows which files have to be updated and which manual steps are needed for the upgrade path
 * "Last try" shows the real time of the last attempt, password field is hidden
 * **Host groups editor** in web interface: add, edit and delete groups. Groups with hosts and the last group can not be deleted. When group path is changed, new backups go to the new directory, existing ones stay where they are
 * Refreshed web interface: compact layout, status badges, light/dark theme switch (follows system theme by default), works on narrow screens

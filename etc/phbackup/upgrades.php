@@ -5,6 +5,47 @@
 // Included from functions.php, so web interface and workers can detect that an upgrade is needed.
 
 
+// What has to be updated by hand for each version, shown by upgrade.php before upgrading.
+// Paths are relative to the git repository; where to copy them:
+//   worker.php, upgrade.php          - stay in the repository (/root/scripts/phbackup), updated by git pull
+//   etc/phbackup/*                   - /etc/phbackup/
+//   web/*                            - your web directory
+//   etc/supervisor/conf.d/*          - /etc/supervisor/conf.d/
+//   zabbix/phbackup.conf             - /etc/zabbix/zabbix_agent2.d/
+// "files" - files to copy, "steps" - other manual actions.
+function upgrade_notes() {
+    $all = array("worker.php", "upgrade.php", "etc/phbackup/functions.php", "web/index.php", "web/style.css");
+    return array(
+        150 => array('files' => $all),
+        151 => array('files' => $all),
+        152 => array('files' => $all),
+        160 => array('files' => $all),
+        161 => array('files' => $all),
+        162 => array(
+            'files' => array("worker.php", "upgrade.php", "etc/phbackup/functions.php"),
+            'steps' => array(
+                "Copy etc/phbackup/functions.custom.php to /etc/phbackup/ only if it does not exist there (it holds your own backup functions)",
+                "Pre-backup scripts of all servers (group 1) are replaced with the default one and reinstalled",
+            ),
+        ),
+        163 => array('files' => array("worker.php", "upgrade.php")),
+        164 => array('files' => array("worker.php", "upgrade.php", "etc/phbackup/functions.php")),
+        165 => array(
+            'files' => array("worker.php", "upgrade.php", "etc/phbackup/functions.php", "etc/phbackup/upgrades.php",
+                             "web/index.php", "web/zabbix.php", "web/style.css",
+                             "etc/supervisor/conf.d/phbackup.conf", "zabbix/phbackup.conf"),
+            'steps' => array(
+                "etc/phbackup/upgrades.php is a new file: copy it BEFORE running upgrade.php, otherwise neither upgrade.php nor web interface start",
+                "etc/phbackup/opt.php: do not overwrite, add the new option \$backup_min_keep = 3; (optional, 3 is the default)",
+                "Supervisor config: keep your numprocs value, then run: supervisorctl update",
+                "Zabbix: change the crontab line as described in README (write via temporary file) and re-import zabbix/PHBackup.yaml with \"Delete missing\" checked",
+                "Default rsync options are replaced for hosts with old defaults, next backup of these hosts may take more space",
+            ),
+        ),
+    );
+}
+
+
 function upgrade_150_1_5_0($db) {
     $sql="select * from host_vars where host=10000;";
     $res = $db->query($sql);

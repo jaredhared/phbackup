@@ -1,5 +1,8 @@
 <?php
 
+if (!file_exists("/etc/phbackup/upgrades.php")) {
+    die("/etc/phbackup/upgrades.php is missing. Copy all files from etc/phbackup of PHBackup repository to /etc/phbackup (except opt.php and functions.custom.php, which hold your settings)\n");
+}
 require_once("/etc/phbackup/upgrades.php");
 
 if (file_exists("/etc/phbackup/functions.custom.php")) {
