@@ -1,6 +1,7 @@
 /* PHBackup web interface */
 
 :root {
+    color-scheme: light;
     --bg: #f6f7f9;
     --surface: #ffffff;
     --text: #1d2125;
@@ -21,7 +22,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
         --bg: #16181b;
         --surface: #1e2125;
         --text: #e3e6e9;
@@ -37,6 +39,25 @@
         --warn: #e0b453;    --warn-bg: #3a3020;
         --off: #8d959e;     --off-bg: #2a2e33;
     }
+}
+
+/* Dark theme chosen by the switch */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #16181b;
+    --surface: #1e2125;
+    --text: #e3e6e9;
+    --muted: #8d959e;
+    --border: #30353b;
+    --row-hover: #252a30;
+    --accent: #5b93e6;
+    --accent-text: #0e1114;
+
+    --ok: #5cc879;      --ok-bg: #1d3325;
+    --run: #6ea2f0;     --run-bg: #1d2a40;
+    --err: #f07070;     --err-bg: #3d2020;
+    --warn: #e0b453;    --warn-bg: #3a3020;
+    --off: #8d959e;     --off-bg: #2a2e33;
 }
 
 * { box-sizing: border-box; }
@@ -76,7 +97,26 @@ h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
 .topbar .brand:hover { text-decoration: none; }
 .topbar .ver { color: var(--muted); font-weight: normal; font-size: 12px; margin-left: 2px; }
 .topbar nav { display: flex; gap: 18px; }
-.topbar .group-filter { margin-left: auto; color: var(--muted); }
+.topbar .group-filter { color: var(--muted); }
+.topbar nav { margin-left: auto; align-items: center; }
+
+/* Theme switch: moon in light theme, sun in dark theme */
+.theme-toggle, button.theme-toggle {
+    display: inline-flex;
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    border-radius: 4px;
+}
+.theme-toggle:hover { background: var(--off-bg); color: var(--text); }
+.theme-toggle .i-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .i-sun { display: inline; }
+:root[data-theme="dark"] .theme-toggle .i-moon { display: none; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .theme-toggle .i-sun { display: inline; }
+    :root:not([data-theme]) .theme-toggle .i-moon { display: none; }
+}
 
 
 /* Hosts table */
@@ -252,7 +292,7 @@ pre.log {
 @media (max-width: 760px) {
     main { padding: 12px; }
     .topbar { padding: 10px 12px; }
-    .topbar .group-filter { margin-left: 0; }
+    .topbar nav { margin-left: 0; }
     td.desc, table.hosts th:nth-child(4) { display: none; }
     table.form td { display: block; width: auto !important; border-bottom: 0; }
     table.form tr { display: block; border-bottom: 1px solid var(--border); }

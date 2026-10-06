@@ -32,7 +32,7 @@
 * upgrade.php stops on the first failed step
 * "Last try" shows the real time of the last attempt, password field is hidden
 * **Host groups editor** in web interface: add, edit and delete groups. Groups with hosts and the last group can not be deleted. When group path is changed, new backups go to the new directory, existing ones stay where they are
-* Refreshed web interface: compact layout, status badges, dark mode, works on narrow screens
+* Refreshed web interface: compact layout, status badges, light/dark theme switch (follows system theme by default), works on narrow screens
 * `111-Latest` links are relative now, so host backup directories can be moved
 
 ## 1.6.4

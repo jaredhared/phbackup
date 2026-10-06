@@ -197,18 +197,16 @@ function save_host_vars($db, $host_id, $post) {
 <title>PHBackup <?php echo h($script_ver_text); ?></title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+// Applying saved theme before page is drawn, so it does not blink
+try { var t = localStorage.getItem('phb-theme'); if (t == 'light' || t == 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
 <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
 <header class="topbar">
 <?php $gq = $cur_group ? "group=$cur_group" : ""; ?>
 <a class="brand" href="index.php<?php echo $gq ? "?$gq" : ""; ?>">PHBackup <span class="ver"><?php echo h($script_ver_text); ?></span></a>
-<nav>
-<a href="index.php<?php echo $gq ? "?$gq" : ""; ?>">Hosts</a>
-<a href="index.php?action=add<?php echo $gq ? "&$gq" : ""; ?>">+ Add host</a>
-<a href="index.php?action=groups">Groups</a>
-<a href="zabbix.php">Zabbix JSON</a>
-</nav>
 <form method="GET" action="index.php" class="group-filter">
 <label>Group
 <select name="group" onchange="this.form.submit()">
@@ -226,6 +224,24 @@ function save_host_vars($db, $host_id, $post) {
 </select>
 </label>
 </form>
+<nav>
+<a href="index.php?action=add<?php echo $gq ? "&$gq" : ""; ?>">+ Add host</a>
+<a href="index.php?action=groups">Groups</a>
+<a href="zabbix.php">Zabbix JSON</a>
+<button type="button" class="theme-toggle" onclick="toggleTheme()" title="Switch light/dark theme" aria-label="Switch light/dark theme">
+<svg class="i-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+<svg class="i-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+</button>
+</nav>
+<script>
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme');
+    if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var next = (cur == 'dark') ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('phb-theme', next); } catch (e) {}
+}
+</script>
 </header>
 <main>
 
