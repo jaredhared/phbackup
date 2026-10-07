@@ -305,3 +305,11 @@ input[name=pre_schedule], input[name=rsync_options], input[name=timestr] { font-
 .mono { font-family: var(--mono); font-size: 13px; }
 h3.section { margin: 22px 0 10px; }
 .small { font-size: 12px; margin-left: 8px; }
+
+/* Status filter in summary */
+.summary a.badge, .summary a.badge:visited { text-decoration: none; }
+.summary a.badge:hover { filter: brightness(0.95); text-decoration: none; }
+.summary a.badge.active { box-shadow: 0 0 0 2px currentColor; }
+.summary a.total, .summary a.total:visited { color: var(--muted); margin-right: 4px; }
+.summary a.total:hover { color: var(--text); text-decoration: none; }
+h2 .badge { vertical-align: 2px; margin-left: 4px; }

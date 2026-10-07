@@ -407,26 +407,54 @@ if (empty($_GET['action'])) {
     $order="$order_by $sort_order";
 
     $group = $cur_group ? $cur_group : 10000;
+    $status = array (-1 => "Unknown", 0 => "Ok", 1 => "Backing up", 2 => "Error", 3 => "Backup too old");
+
+    // Status filter, set by clicking a status in the summary under the table
+    $cur_status = (isset($_GET['status']) && preg_match('/^-?\d+$/', (string)$_GET['status']) && isset($status[(int)$_GET['status']])) ? (int)$_GET['status'] : null;
 
     $groupname = "All";
-    $res = db_query($db, "SELECT * FROM hosts ORDER BY $order");
+    $where = array();
+    $params = array();
     if ($group!=10000)
     {
         $gres = db_query($db, "SELECT * FROM host_groups WHERE id=?", array($group));
         if ($row = $gres->fetch_array()) {
             $groupname = $row['name'];
-            $res = db_query($db, "SELECT * FROM hosts WHERE group_id=? ORDER BY $order", array($row['id']));
+            $where[] = "group_id=?";
+            $params[] = $row['id'];
         }
     }
 
-    echo "<h2>Hosts <span class='muted'>".h($groupname)."</span></h2>";
+    // Number of hosts by status in the group, regardless of status filter
+    $counts = array();
+    $cres = db_query($db, "SELECT status, COUNT(*) AS num FROM hosts".($where ? " WHERE ".implode(" AND ", $where) : "")." GROUP BY status ORDER BY status", $params);
+    while ($row = $cres->fetch_array()) $counts[(int)$row['status']] = (int)$row['num'];
 
-    if ($res->num_rows == 0) notice("No hosts yet. <a href='index.php?action=add".($cur_group ? "&group=$cur_group" : "")."'>Add the first one</a>", "warn");
+    if ($cur_status !== null) {
+        $where[] = "status=?";
+        $params[] = $cur_status;
+    }
+    $res = db_query($db, "SELECT * FROM hosts".($where ? " WHERE ".implode(" AND ", $where) : "")." ORDER BY $order", $params);
+
+    // Host list URL with current group and sorting
+    $list_url = function($st) use ($group, $order_by, $sort_order) {
+        return "?group=$group&order-by=$order_by&order=$sort_order".($st !== null ? "&status=$st" : "");
+    };
+
+    echo "<h2>Hosts <span class='muted'>".h($groupname)."</span>";
+    if ($cur_status !== null) echo " <span class='badge s$cur_status'>".h($status[$cur_status])."</span> <a class='small' href='".$list_url(null)."'>Show all</a>";
+    echo "</h2>";
+
+    if ($res->num_rows == 0) {
+        if ($cur_status !== null) notice("No hosts with status ".h($status[$cur_status]).". <a href='".$list_url(null)."'>Show all hosts</a>", "warn");
+        else notice("No hosts yet. <a href='index.php?action=add".($cur_group ? "&group=$cur_group" : "")."'>Add the first one</a>", "warn");
+    }
     if ($res->num_rows > 0) {
         // Sortable column header
-        $sort_th = function($col, $title) use ($group, $order_by, $sort_order, $sort_order1) {
+        $status_q = $cur_status !== null ? "&status=$cur_status" : "";
+        $sort_th = function($col, $title) use ($group, $order_by, $sort_order, $sort_order1, $status_q) {
             $arrow = ($order_by == $col) ? ($sort_order == "asc" ? "&#8593;" : "&#8595;") : "<span class='muted'>&#8645;</span>";
-            return "<th><a href='?group=$group&order-by=$col&order=$sort_order1'>$title $arrow</a></th>";
+            return "<th><a href='?group=$group&order-by=$col&order=$sort_order1$status_q'>$title $arrow</a></th>";
         };
         echo "<div class='table-wrap'><table class='hosts'><thead><tr>"
             .$sort_th("name", "Host")
@@ -435,8 +463,6 @@ if (empty($_GET['action'])) {
             .$sort_th("description", "Description")
             ."<th class='actions'></th></tr></thead><tbody>";
         $i=0;
-        $status = array (-1 => "Unknown", 0 => "Ok", 1 => "Backing up", 2 => "Error", 3 => "Backup too old");
-	$status_arr = array();
 	$pre_states = array(1 => "<div class='sub'>Pre-script install pending</div>", 2 => "<div class='sub red'>Pre-script install failed</div>", 3 => "<div class='sub'>Pre-script installing</div>");
 
         while ($row = $res->fetch_array()) {
@@ -470,13 +496,16 @@ if (empty($_GET['action'])) {
                 .'</td>';
             echo '</tr>';
             $i++;
-	    isset($status_arr[$st]) ? $status_arr[$st]++ : $status_arr[$st] = 1;
         }
         echo "</tbody></table></div>";
-        echo "<div class='summary'><b>$i</b> hosts";
-        ksort($status_arr);
-        foreach($status_arr as $stat => $num) {
-	    echo " <span class='badge s$stat'>".h($status[$stat] ?? $stat)." $num</span>";
+    }
+
+    // Summary: click on a status shows only hosts with it, click on the active one shows all
+    if (!empty($counts)) {
+        echo "<div class='summary'><a href='".$list_url(null)."' class='total".($cur_status === null ? " active" : "")."'><b>".array_sum($counts)."</b> hosts</a>";
+        foreach($counts as $stat => $num) {
+	    $active = ($cur_status === $stat);
+	    echo " <a href='".$list_url($active ? null : $stat)."' class='badge s$stat".($active ? " active" : "")."' title='".($active ? "Show all hosts" : "Show only hosts with this status")."'>".h($status[$stat] ?? $stat)." $num</a>";
         }
         echo "</div>";
     }

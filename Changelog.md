@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Host list can be filtered by status: click a status in the summary under the table (click again to show all hosts)
 * Fixed pre-backup script being installed by two workers at once when workers start together (a starting worker reset installations of other workers)
 * Fixed a stale host being reported as unlocked by several workers at start; a stale lock is released only if it is still the same lock, so a host locked again for a new backup can not be unlocked by mistake
 
