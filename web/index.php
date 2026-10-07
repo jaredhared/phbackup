@@ -451,7 +451,9 @@ if (empty($_GET['action'])) {
             echo "<td><span class='badge s$st'>$badge</span>";
             if ($disabled) echo " <span class='badge off'>Disabled</span>";
             if ($st==1 && (int)$row['last_result']==2) echo "<div class='sub red'>Last backup failed</div>";
-            echo ($pre_states[$row['pre_install']] ?? "")."</td>";
+            $pre = (int)$row['pre_install'];
+            if ($pre >= 100) $pre = 3; // claimed by a worker, installing
+            echo ($pre_states[$pre] ?? "")."</td>";
 
             echo '<td class="nowrap"><span class="ts">'.short_date($row['last_backup']).'</span>';
             if($st>1) echo '<div class="sub">Last try: '.short_date($row['backup_started']).'</div>';

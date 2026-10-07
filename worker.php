@@ -29,6 +29,8 @@ $ticker_step=5;
 $db_retry_step=30;
 // Locked host without running backup process is considered stale after this time, minutes
 $stale_minutes=5;
+// Pre-script installation claimed by worker N is stored as pre_install = PRE_INSTALL_CLAIM + N
+const PRE_INSTALL_CLAIM = 100;
 
 if (!preg_match('/phb-worker-(\d+)/', (string)getenv('SUPERVISOR_PROCESS_NAME'), $matches)) {
     die("SUPERVISOR_PROCESS_NAME is not set or invalid, worker should be run by Supervisor\n");
@@ -94,23 +96,35 @@ function release_own_hosts($db) {
         mark_backup_failed($db, $row['id']);
     }
 
-    // Pre-script installations interrupted by crash will be restarted
-    $db->query("UPDATE hosts SET pre_install=1 WHERE pre_install=3");
+    // Pre-script installations of this worker interrupted by crash will be restarted.
+    // Only own claims are reset: other workers may be installing right now (e.g. all workers start together).
+    // 3 is a claim of version 1.6.5 without worker number.
+    db_query($db, "UPDATE hosts SET pre_install=1 WHERE pre_install=? OR pre_install=3", array(PRE_INSTALL_CLAIM + $worker_id));
 }
 
 
-// Unlocks hosts which are locked by a worker, but no worker process is backing them up
+// Unlocks hosts which are locked by a worker, but no worker process is backing them up,
+// and restarts pre-script installations claimed by workers which are not running anymore
 function release_stale_hosts($db) {
     global $stale_minutes;
 
-    $res = db_query($db, "SELECT id, name, worker FROM hosts WHERE worker>=0 AND backup_started < NOW() - INTERVAL ? MINUTE", array($stale_minutes));
-    if ($res->num_rows == 0) return;
+    $res = db_query($db, "SELECT id, name, worker, backup_started FROM hosts WHERE worker>=0 AND backup_started < NOW() - INTERVAL ? MINUTE", array($stale_minutes));
+    $claims = db_query($db, "SELECT id, name, pre_install FROM hosts WHERE pre_install>=?", array(PRE_INSTALL_CLAIM));
+    if ($res->num_rows == 0 && $claims->num_rows == 0) return;
 
     $output = array();
     exec("ps -eo args", $output, $return_code);
     if ($return_code>0) {
         log_msg("Failed: ps -eo args");
         return;
+    }
+
+    while ($row = $claims->fetch_array()) {
+        $claim_worker = $row['pre_install'] - PRE_INSTALL_CLAIM;
+        if (empty(preg_grep('/^phbackup-'.$claim_worker.' /', $output))) {
+            if (db_query($db, "UPDATE hosts SET pre_install=1 WHERE id=? AND pre_install=?", array($row['id'], $row['pre_install'])) == 1)
+                log_msg("Host ".$row['name']." - pre-script installation of worker $claim_worker was interrupted, restarting");
+        }
     }
 
     while ($row = $res->fetch_array()) {
@@ -121,18 +135,20 @@ function release_stale_hosts($db) {
             if (preg_match($name_re, $line)) $running++;
         }
         if ($running == 0) {
-            log_msg("Host ".$row['name']." - Host is stale, unlocking");
-            // worker=? protects from unlocking a host which was locked again in the meantime
-            db_query($db, "UPDATE hosts set worker=-1, status=2, last_result=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=? AND worker=?", array($row['id'], $row['worker']));
+            // The host may be unlocked by another worker in the meantime (e.g. its owner restarted and
+            // released it) or even locked again for a new backup. So it is unlocked only if it is still
+            // the same lock: same worker and same backup start time.
+            $unlocked = db_query($db, "UPDATE hosts set worker=-1, status=2, last_result=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=? AND worker=? AND backup_started=?", array($row['id'], $row['worker'], $row['backup_started']));
+            if ($unlocked == 1) log_msg("Host ".$row['name']." - Host is stale, unlocking");
         }
     }
 }
 
 
 // Installs pre-backup script and cron file to one host.
-// Host is claimed (pre_install=3) in a short transaction, SSH is done without holding DB locks.
+// Host is claimed (pre_install = PRE_INSTALL_CLAIM + worker id) in a short transaction, SSH is done without holding DB locks.
 function install_pre_script($db) {
-    global $datestart;
+    global $datestart, $worker_id;
 
     $db->begin_transaction();
     $res = $db->query("SELECT id FROM hosts WHERE pre_install=1 ORDER BY id LIMIT 1 FOR UPDATE");
@@ -142,7 +158,7 @@ function install_pre_script($db) {
         return;
     }
     $id = (int)$row['id'];
-    $db->query("UPDATE hosts SET pre_install=3 WHERE id=$id");
+    $db->query("UPDATE hosts SET pre_install=".(PRE_INSTALL_CLAIM + $worker_id)." WHERE id=$id");
     $db->commit();
 
     $datestart = date("Y-m-d_H:i:s");
