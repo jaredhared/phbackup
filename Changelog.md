@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* **Fixed successful backups of big hosts being marked as failed with "MySQL server has gone away"**: the DB connection opened before a long backup and cleaning was closed by MySQL (wait_timeout). Now the worker reconnects before saving the result
+* Cleaning of old backups reports directories which could not be removed (and filesystem errors) instead of counting them as removed, and does not flood the log with thousands of rm errors
 * Host list can be filtered by status: click a status in the summary under the table (click again to show all hosts)
 * Fixed pre-backup script being installed by two workers at once when workers start together (a starting worker reset installations of other workers)
 * Fixed a stale host being reported as unlocked by several workers at start; a stale lock is released only if it is still the same lock, so a host locked again for a new backup can not be unlocked by mistake

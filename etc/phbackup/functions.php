@@ -42,6 +42,20 @@ function db_connect() {
 }
 
 
+// Returns a working DB connection: the given one if it is alive, a new one otherwise.
+// Backup and cleaning of a big host can take hours, and MySQL closes the idle connection opened
+// before them (wait_timeout), so the result could not be saved ("MySQL server has gone away").
+function db_alive($db) {
+    try {
+        $db->query("SELECT 1");
+        return $db;
+    }
+    catch (Throwable $e) {
+        return db_connect();
+    }
+}
+
+
 function get_script_vars($db) {
     $script_vars = array();
     $sql="select * from host_vars where host=10000;";
@@ -235,6 +249,7 @@ function ssh_options($port, $port_flag = "-p") {
 
 
 function mark_backup_failed($db, $host_id) {
+    $db = db_alive($db);
     db_query($db, "UPDATE hosts set worker=-1, status=2, last_result=2, next_try=DATE_ADD(NOW(), INTERVAL 1 HOUR), backup_now=0 where id=?", array($host_id));
 }
 
@@ -286,13 +301,30 @@ function rotate_backups($bkpath, $keep_days, $min_keep, $suffix = '') {
         if ($ts < $cutoff) $to_delete[] = $entry;
     }
 
+    $removed = array();
+    $failed = array();
     foreach ($to_delete as $entry) {
         $full = "$bkpath/$entry";
-        if (is_dir($full)) exec("rm -rf -- ".escapeshellarg($full));
-        else unlink($full);
+        if (is_dir($full)) {
+            $output = array();
+            exec("rm -rf -- ".escapeshellarg($full)." 2>&1", $output, $return_code);
+            $ok = ($return_code == 0);
+        }
+        else {
+            $output = array();
+            $ok = @unlink($full);
+        }
+        if ($ok) { $removed[] = $entry; continue; }
+
+        // Only a few lines of errors: a damaged directory can produce thousands of them
+        $failed[] = $entry;
+        echo "Can not completely remove $full:\n";
+        foreach (array_slice($output, 0, 5) as $line) echo "  $line\n";
+        if (count($output) > 5) echo "  ... ".(count($output) - 5)." more errors\n";
+        if (preg_grep('/Structure needs cleaning|Input\/output error/', $output)) echo "  Filesystem errors detected, please check the backup filesystem (dmesg, fsck)\n";
     }
 
-    return $to_delete;
+    return array('removed' => $removed, 'failed' => $failed);
 }
 
 
@@ -328,6 +360,7 @@ function run_backup ($db, $host_data, $host_vars) {
 function finish_backup_ok ($db, $host_data, $host_vars) {
     global $nextbackup, $datestart, $host_id;
 
+    $db = db_alive($db);
     $backup_period = max(1, (int)($host_vars['backup_period'] ?? 24));
     // "Backup now" does not shift the schedule: if the next regular backup is already planned, it is kept.
     // Previously next_try was set to NOW(), and the host was backed up again right away.
@@ -433,8 +466,9 @@ function backup_server_via_ssh ($db, $host_data, $host_vars) {
 
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
         cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
-        $removed = rotate_backups($bkpath, $host_vars['backup_keep_period'] ?? 30, $backup_min_keep ?? 3);
-        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups (".count($removed)." removed)\n";
+        $rot = rotate_backups($bkpath, $host_vars['backup_keep_period'] ?? 30, $backup_min_keep ?? 3);
+        echo date("Y-m-d H:i:s")." - [$worker_id] Host ".$host_data['name']." - cleaned old backups (".count($rot['removed'])." removed"
+            .(count($rot['failed']) ? ", ".count($rot['failed'])." could not be removed completely" : "").")\n";
 
         finish_backup_ok($db, $host_data, $host_vars);
         cli_set_process_title("phbackup-$worker_id [idle]");
@@ -507,8 +541,9 @@ function backup_cisco_switch_via_telnet ($db, $host_data, $host_vars) {
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - successfully backed up!\n";
         echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaning old backups\n";
         cli_set_process_title("phbackup-$worker_id [cleaning - ".$host_data['name']."]");
-        $removed = rotate_backups($bkpath, $host_vars['backup_keep_period'] ?? 30, $backup_min_keep ?? 3, '.txt');
-        echo "$dateend - [$worker_id] Host ".$host_data['name']." - cleaned old backups (".count($removed)." removed)\n";
+        $rot = rotate_backups($bkpath, $host_vars['backup_keep_period'] ?? 30, $backup_min_keep ?? 3, '.txt');
+        echo date("Y-m-d H:i:s")." - [$worker_id] Host ".$host_data['name']." - cleaned old backups (".count($rot['removed'])." removed"
+            .(count($rot['failed']) ? ", ".count($rot['failed'])." could not be removed completely" : "").")\n";
 
         finish_backup_ok($db, $host_data, $host_vars);
         cli_set_process_title("phbackup-$worker_id [idle]");

@@ -312,7 +312,8 @@ while(true)
         install_pre_script($db);
         backup_next_host($db);
 
-        $db->close();
+        // The connection may have died during a long backup, closing it must not throw
+        try { $db->close(); } catch (Throwable $e) {}
     }
     catch (Throwable $e) {
         log_msg("Error: ".$e->getMessage()." at ".basename($e->getFile()).":".$e->getLine());
