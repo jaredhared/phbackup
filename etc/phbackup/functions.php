@@ -9,8 +9,10 @@ if (file_exists("/etc/phbackup/functions.custom.php")) {
   include_once("/etc/phbackup/functions.custom.php");
 }
 
-// Default rsync options for new hosts
-const DEFAULT_RSYNC_OPTIONS = "-aHAXz --numeric-ids";
+// Default rsync options for new hosts.
+// No compression: rsync "zlib" compression (the only one older rsync versions support) can break with
+// "inflate returned -3 ... error in rsync protocol data stream (code 12)" on random files.
+const DEFAULT_RSYNC_OPTIONS = "-aHAX --numeric-ids";
 
 
 // ---------------------------------------------------------------------------

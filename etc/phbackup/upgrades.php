@@ -30,14 +30,23 @@ function upgrade_notes() {
         ),
         163 => array('files' => array("worker.php", "upgrade.php")),
         164 => array('files' => array("worker.php", "upgrade.php", "etc/phbackup/functions.php")),
+        166 => array(
+            'files' => array("worker.php", "upgrade.php", "etc/phbackup/functions.php", "etc/phbackup/upgrades.php",
+                             "web/index.php", "web/zabbix.php", "zabbix/phbackup.conf"),
+            'steps' => array(
+                "Compression (-z) is removed from rsync options of hosts with 1.6.5 default options, it caused \"inflate returned -3\" errors. Hosts with custom options containing -z should be checked by hand",
+                "etc/phbackup/opt.php: do not overwrite, add the new option \$timezone = ''; (optional, empty - system time zone)",
+                "Time zone: PHP now uses system time zone instead of UTC. If php.ini had no date.timezone, last/next backup times of existing hosts are shown shifted until their next backup, and time slots are now checked in local time",
+                "Zabbix agent: copy zabbix/phbackup.conf again and restart the agent",
+            ),
+        ),
         165 => array(
             'files' => array("worker.php", "upgrade.php", "etc/phbackup/functions.php", "etc/phbackup/upgrades.php",
                              "web/index.php", "web/zabbix.php", "web/style.css",
                              "etc/supervisor/conf.d/phbackup.conf", "zabbix/phbackup.conf"),
             'steps' => array(
                 "etc/phbackup/upgrades.php is a new file: copy it BEFORE running upgrade.php, otherwise neither upgrade.php nor web interface start",
-                "etc/phbackup/opt.php: do not overwrite, add new options (optional): \$backup_min_keep = 3; and \$timezone = ''; (empty - system time zone)",
-                "Time zone: PHP now uses system time zone instead of UTC. If php.ini had no date.timezone, last/next backup times of existing hosts are shown shifted until their next backup, and time slots are now checked in local time",
+                "etc/phbackup/opt.php: do not overwrite, add the new option \$backup_min_keep = 3; (optional, 3 is the default)",
                 "Supervisor config: keep your numprocs value, then run: supervisorctl update",
                 "Zabbix: change the crontab line as described in README (write via temporary file) and re-import zabbix/PHBackup.yaml with \"Delete missing\" checked",
                 "Default rsync options are replaced for hosts with old defaults, next backup of these hosts may take more space",
@@ -217,6 +226,24 @@ function upgrade_165_1_6_5($db) {
     if (!isset($script_vars['version_text'])) {$sql="UPDATE host_vars SET value='1.6.5' WHERE host=10000 AND var='version_text' "; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error); }
 
     if ($ok==5) { echo "Done!\n"; return true; }
+    else { echo "Error!\n"; return false; }
+};
+
+
+function upgrade_166_1_6_6($db) {
+    echo "Upgrading to 1.6.6... ";
+
+    $ok=0;
+
+    // rsync "zlib" compression breaks with "inflate returned -3" on random files, compression is removed
+    // from the 1.6.5 default options. Custom options are left as is.
+    $sql="UPDATE host_vars SET value='".DEFAULT_RSYNC_OPTIONS."' WHERE var='rsync_options' AND value='-aHAXz --numeric-ids'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error);
+    echo "\n  rsync options updated for ".$db->affected_rows." host(s) (compression removed)\n  ";
+
+    $sql="UPDATE host_vars SET value=166 WHERE host=10000 AND var='version'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error);
+    $sql="UPDATE host_vars SET value='1.6.6' WHERE host=10000 AND var='version_text'"; $db->query($sql) ? $ok++ : printf("Error message: %s\n", $db->error);
+
+    if ($ok==3) { echo "Done!\n"; return true; }
     else { echo "Error!\n"; return false; }
 };
 

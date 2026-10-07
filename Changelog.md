@@ -1,5 +1,16 @@
 # PHBackup changelog
 
+## 1.6.6
+
+* **Fixed rsync failures "inflate returned -3 ... error in rsync protocol data stream (code 12)"** on random files: compression (`-z`) is removed from default rsync options, upgrade removes it from hosts with 1.6.5 default options. For slow links use `--zc=zstd` (rsync 3.2+ on both sides) or `--zc=zlibx`
+* Fixed time zone mismatch: PHP used UTC (when date.timezone is not set in php.ini) while MySQL used system time, so time slots were checked in UTC and Zabbix backup age was shifted. Now system time zone (or `$timezone` from opt.php) is used by PHP and DB sessions
+* Editing a host does not reset pending or failed pre-script installation anymore
+* A host can not be renamed while it is being backed up
+* "Backup now" for a disabled host shows a proper message
+* IPv6 addresses work for rsync and scp
+* Default keep period (30 days) is used if a host has no keep period set
+* Zabbix process check counts only PHBackup workers
+
 ## 1.6.5
 
 * **Security:** fixed SQL injections, XSS and shell command injections in web interface and backup workers. A compromised host could get root access to the backup server via file names shown in the backup log
@@ -34,13 +45,6 @@
 * **Host groups editor** in web interface: add, edit and delete groups. Groups with hosts and the last group can not be deleted. When group path is changed, new backups go to the new directory, existing ones stay where they are
 * Refreshed web interface: compact layout, status badges, light/dark theme switch (follows system theme by default), works on narrow screens
 * `111-Latest` links are relative now, so host backup directories can be moved
-* Fixed time zone mismatch: PHP used UTC (when date.timezone is not set in php.ini) while MySQL used system time, so time slots were checked in UTC and Zabbix backup age was shifted. Now system time zone (or `$timezone` from opt.php) is used by PHP and DB sessions
-* Editing a host does not reset pending or failed pre-script installation anymore
-* A host can not be renamed while it is being backed up
-* "Backup now" for a disabled host shows a proper message
-* IPv6 addresses work for rsync and scp
-* Default keep period (30 days) is used if a host has no keep period set
-* Zabbix process check counts only PHBackup workers
 
 ## 1.6.4
 
