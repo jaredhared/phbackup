@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* **Fixed skipped days with time slots**: if "start time + period" falls outside time slots (e.g. after "Backup now" at 07:18 with 2-6 slot, or after a late start), the next backup is planned to the opening of the last slot before it, instead of waiting for the next slot almost a whole period later. A backup is not planned earlier than half of the period after the previous one
 * **Fixed successful backups of big hosts being marked as failed with "MySQL server has gone away"**: the DB connection opened before a long backup and cleaning was closed by MySQL (wait_timeout). Now the worker reconnects before saving the result
 * Cleaning of old backups reports directories which could not be removed (and filesystem errors) instead of counting them as removed, and does not flood the log with thousands of rm errors
 * Host list can be filtered by status: click a status in the summary under the table (click again to show all hosts)

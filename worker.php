@@ -213,12 +213,7 @@ function install_pre_script($db) {
 
 // Checks if current hour is inside one of time slots like "0-2,4-7"
 function in_time_slots($time_slots) {
-    $curhour = (int)date("G");
-    foreach (explode(",", (string)$time_slots) as $time) {
-        $hours = explode("-", $time);
-        if (count($hours) == 2 && $curhour >= (int)$hours[0] && $curhour < (int)$hours[1]) return true;
-    }
-    return false;
+    return time_in_slots($time_slots, time());
 }
 
 

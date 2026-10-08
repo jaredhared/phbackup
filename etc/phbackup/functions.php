@@ -357,17 +357,55 @@ function run_backup ($db, $host_data, $host_vars) {
 
 
 
+// Checks if a moment is inside one of time slots like "0-2,4-7"
+function time_in_slots($time_slots, $ts) {
+    $hour = (int)date("G", $ts);
+    foreach (explode(",", (string)$time_slots) as $time) {
+        $hours = explode("-", $time);
+        if (count($hours) == 2 && $hour >= (int)$hours[0] && $hour < (int)$hours[1]) return true;
+    }
+    return false;
+}
+
+
+// Time of the next regular backup after a backup started at $start.
+// Normally it is $start + period. But if this moment is outside time slots, waiting for the next slot
+// could skip almost a whole period (e.g. daily backup in 2-6 slot, started by "Backup now" at 07:18:
+// 07:18 next day is outside the slot, and the next backup would run only at 02:00 the day after).
+// So in this case the next backup is planned to the opening of the last slot before that moment,
+// but not earlier than half of the period after $start, so backups are not made too often.
+function next_backup_time($start, $period_hours, $time_slots) {
+    $due = $start + $period_hours * 3600;
+    if (time_in_slots($time_slots, $due)) return $due;
+
+    $best = false;
+    for ($days_back = 0; $days_back <= 1; $days_back++) {
+        $day = date("Y-m-d", $due - $days_back * 86400);
+        foreach (explode(",", (string)$time_slots) as $time) {
+            $hours = explode("-", $time);
+            if (count($hours) != 2) continue;
+            $opening = strtotime("$day ".(int)$hours[0].":00:00");
+            if ($opening <= $due && ($best === false || $opening > $best)) $best = $opening;
+        }
+    }
+    if ($best !== false && $best >= $start + $period_hours * 1800) return $best;
+    return $due;
+}
+
+
 function finish_backup_ok ($db, $host_data, $host_vars) {
     global $nextbackup, $datestart, $host_id;
 
     $db = db_alive($db);
+
     $backup_period = max(1, (int)($host_vars['backup_period'] ?? 24));
+    $next_try = date("Y-m-d H:i:s", next_backup_time(strtotime($nextbackup), $backup_period, $host_data['time_slots'] ?? "0-24"));
     // "Backup now" does not shift the schedule: if the next regular backup is already planned, it is kept.
     // Previously next_try was set to NOW(), and the host was backed up again right away.
     if ($host_data['backup_now']==1)
-        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, last_result=0, next_try=IF(next_try > NOW(), next_try, DATE_ADD(?, INTERVAL ? HOUR)), backup_now=0 where id=?", array($datestart, $nextbackup, $backup_period, $host_id));
+        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, last_result=0, next_try=IF(next_try > NOW(), next_try, ?), backup_now=0 where id=?", array($datestart, $next_try, $host_id));
     else
-        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, last_result=0, next_try=DATE_ADD(?, INTERVAL ? HOUR), backup_now=0 where id=?", array($datestart, $nextbackup, $backup_period, $host_id));
+        db_query($db, "UPDATE hosts set worker=-1, last_backup=?, status=0, last_result=0, next_try=?, backup_now=0 where id=?", array($datestart, $next_try, $host_id));
 }
 
 
